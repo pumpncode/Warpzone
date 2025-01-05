@@ -20,6 +20,8 @@ SMODS.Atlas {
     -- Height of each sprite in 1x size
     py = 95
 }
+SMODS.Atlas {key = "modicon", path = "wzicon.png", px = 32, py = 32}
+SMODS.Atlas({key = 'guestapp', path = 'guest.png', px = 71, py = 95})
 
 SMODS.Joker {
     key = "aluber",
@@ -379,9 +381,242 @@ SMODS.Joker {
         end
     end
 }
+SMODS.Joker {
+    key = "votv",
+    name = "Voices of the Void",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Voices of the Void",
+        text = {
+            "Grants {C:attention}bonuses{} to {C:attention}3 cards{}",
+            "every round when scored",
+            "{C:attention}#4# of #1#{}: {C:chips}+303{} Chips",
+            "{C:attention}#5# of #2#{}: {C:mult}+42{} Mult",
+            "{C:attention}#6# of #3#{}: {X:mult,C:white}X3.14{} Mult"
+        }
+    },
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 3,
+    pos = { x = 1, y = 2 },
+    cost = 8,
+    config = { 
+        suit = { 
+            suit1 = "Spades",
+            suit2 = "Spades",
+            suit3 = "Spades"
+        },
+        rank = {
+            rank1 = "Ace",
+            rank2 = "Ace",
+            rank3 = "Ace"
+        },
+    },
+    loc_vars = function(self, info_queue, card)
+        return {
+            vars = {card.ability.suit.suit1, card.ability.suit.suit2, card.ability.suit.suit3, card.ability.rank.rank1, card.ability.rank.rank2, card.ability.rank.rank3}
+        }
+    end,
+    set_ability = function(self, card, initial, delay_sprites)
+    local suits = { "Spades", "Hearts", "Clubs", "Diamonds" }
+		for i = 1, 3 do
+			local randomValue = math.ceil(pseudorandom('votv') * 4)
+			card.ability.suit["suit" .. i] = suits[randomValue]
+		end
+    local ranks = { [1] = "Ace", [11] = "Jack", [12] = "Queen", [13] = "King" }
+		for i = 1, 3 do
+			local randomRank = math.ceil(pseudorandom('votv') * 13)
+			card.ability.rank["rank" .. i] = ranks[randomRank] or tostring(randomRank)
+		end
+	end,
+	calculate = function(self, card, context)
+	if context.end_of_round and not context.repetition and context.game_over == false then
+		local suits = { "Spades", "Hearts", "Clubs", "Diamonds" }
+			for i = 1, 3 do
+				local randomValue = math.ceil(pseudorandom('votv') * 4)
+				card.ability.suit["suit" .. i] = suits[randomValue]
+			end
+		local ranks = { [1] = "Ace", [11] = "Jack", [12] = "Queen", [13] = "King" }
+			for i = 1, 3 do
+				local randomRank = math.ceil(pseudorandom('votv') * 13)
+				card.ability.rank["rank" .. i] = ranks[randomRank] or tostring(randomRank)
+			end
+		end
+	if context.individual and context.cardarea == G.play then
+		if context.other_card:is_suit(card.ability.suit.suit1) and ((card.ability.rank.rank1 == "Ace" and context.other_card:get_id() == 1) or (card.ability.rank.rank1 == "Jack" and context.other_card:get_id() == 11) or (card.ability.rank.rank1 == "Queen" and context.other_card:get_id() == 12) or (card.ability.rank.rank1 == "King" and context.other_card:get_id() == 13) or context.other_card:get_id() == tonumber(card.ability.rank.rank1)) then
+			SMODS.eval_this(context.other_card, {
+                message = localize { type = 'variable', key = 'a_chips', vars = {303}},
+                chip_mod = 303,
+                colour = G.C.CHIPS
+            })
+		end
+		if context.other_card:is_suit(card.ability.suit.suit2) and ((card.ability.rank.rank2 == "Ace" and context.other_card:get_id() == 1) or (card.ability.rank.rank2 == "Jack" and context.other_card:get_id() == 11) or (card.ability.rank.rank2 == "Queen" and context.other_card:get_id() == 12) or (card.ability.rank.rank2 == "King" and context.other_card:get_id() == 13) or context.other_card:get_id() == tonumber(card.ability.rank.rank2)) then
+			SMODS.eval_this(context.other_card, {
+                message = localize { type = 'variable', key = 'a_mult', vars = {42}},
+                mult_mod = 42, 
+                colour = G.C.MULT
+            })
+		end
+		if context.other_card:is_suit(card.ability.suit.suit3) and ((card.ability.rank.rank3 == "Ace" and context.other_card:get_id() == 1) or (card.ability.rank.rank3 == "Jack" and context.other_card:get_id() == 11) or (card.ability.rank.rank3 == "Queen" and context.other_card:get_id() == 12) or (card.ability.rank.rank3 == "King" and context.other_card:get_id() == 13) or context.other_card:get_id() == tonumber(card.ability.rank.rank3)) then
+			return {
+                x_mult = 3.14,
+                colour = G.C.RED,
+				card = context.other_card
+            }
+		end
+	end
+end
+}
+SMODS.Joker {
+    key = "ironclad",
+    name = "Ruby Key",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Ruby Key",
+        text = {
+            "When bought, turns into a",
+			"random {C:attention}Ironclad consumable{}",
+			"{C:inactive}(can only be bought once, must have room){}"
+        }
+    },
+	no_pool_flag = 'ironclad_bought',
+    unlocked = true,
+    discovered = true,
+    eternal_compat = false,
+    perishable_compat = false,
+    blueprint_compat = false,
+    rarity = 2,
+    pos = { x = 2, y = 2 },
+    cost = 5,
+    add_to_deck = function(self, card, from_debuff)
+		play_sound('tarot1')
+		card:start_dissolve()
+		if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			G.GAME.pool_flags.ironclad_bought = true
+			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+            local ironcladcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, nil)
+            ironcladcons:add_to_deck()
+            G.consumeables:emplace(ironcladcons)
+            G.GAME.consumeable_buffer = 0
+			end
+		end,
+}
 
+SMODS.ConsumableType {
+    key = 'GuestAppearance',
+    primary_colour = HEX('c32a2a'),
+    secondary_colour = HEX('902e2e'),
+    loc_txt = {
+        ["name"] = 'Guest Consumable',
+        ["collection"] = 'Guest Appearances',
+        ["undiscovered"] = {
+            ["name"] = 'Not Discovered',
+            ["text"] = {
+                [1] = 'Purchase or use',
+                [2] = 'this card in an',
+                [3] = 'unseeded run to',
+                [4] = 'learn what it does'
+            }
+        }
+    }
+}
 
-function SMODS.INIT.Warpzone()
+SMODS.Consumable{
+    set = 'GuestAppearance',
+	atlas = 'guestapp',
+    key = 'fiendfire',
+	loc_txt = {
+        name = "Fiend Fire",
+        text = {
+            "Choose one card, destroy all others",
+			"and create a {C:dark_edition}Negative {C:attention}\"Joker\"{}",
+			"with {C:mult}Mult bonus{} equal to half of the",
+			"{C:attention}total ranks{} of all destroyed cards",
+        }
+    },
+	pos = { x = 0, y = 0 },
+	can_use = function(self, card)
+    if G.hand and (G.hand.highlighted and #G.hand.highlighted == 1) then
+        return true
+    end    
+end,    
+use = function(self, card)
+	local totalrank = 0
+        for i = 1, #G.hand.cards do
+            local is_highlighted = false
+            for j = 1, #G.hand.highlighted do
+                if G.hand.cards[i] == G.hand.highlighted[j] then
+                    is_highlighted = true
+                    break
+                end
+            end
+            if not is_highlighted then
+				totalrank = totalrank + G.hand.cards[i]:get_id()
+                G.hand.cards[i]:start_dissolve()
+            end
+        end
+	local custom_jimbo = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_joker")
+			custom_jimbo:set_edition({negative = true})
+			custom_jimbo.ability.mult = totalrank / 2
+            custom_jimbo:add_to_deck()
+            G.jokers:emplace(custom_jimbo)
+end
+}
+SMODS.Consumable{
+    set = 'GuestAppearance',
+	atlas = 'guestapp',
+    key = 'bloodletting',
+	loc_txt = {
+        name = "Bloodletting",
+        text = {
+            "Gain {C:attention}+1{} hand size",
+			"all required scores",
+			"are increased by {C:attention}6%{}"
+        }
+    },
+	pos = { x = 1, y = 0 },
+	can_use = function(self, card)
+        return true 
+end,    
+use = function(self, card)
+	G.hand:change_size(1)
+	G.GAME.starting_params.ante_scaling = (G.GAME.starting_params.ante_scaling / 100) * (100 + 6)
+	G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
+    G.HUD_blind:get_UIE_by_ID('HUD_blind_count').UIBox:recalculate()
+	play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
+end
+}
+SMODS.Consumable{
+    set = 'GuestAppearance',
+	atlas = 'guestapp',
+    key = 'armaments',
+	loc_txt = {
+        name = "Armaments",
+        text = {
+            "Add {C:chips}+5{} Chips and a random",
+			"{C:attention}enhancement{}, {C:attention}seal{} and",
+			"{C:attention}edition{} to {C:attention}1{} selected card",
+        }
+    },
+	pos = { x = 2, y = 0 },
+	can_use = function(self, card)
+    if G.hand and (G.hand.highlighted and #G.hand.highlighted == 1) then
+        return true
+    end    
+end,    
+use = function(self, card)
+	local seals = {"Blue","Red","Gold","Purple"}
+	local edition = poll_edition('armament',nil,true,true)
+	G.hand.highlighted[1]:set_ability(G.P_CENTERS[SMODS.poll_enhancement({guaranteed = true})])
+	G.hand.highlighted[1]:set_seal(seals[pseudorandom('armaments', 1, 4)], nil, true)
+	G.hand.highlighted[1]:set_edition(edition,true)
+	G.hand.highlighted[1].ability.perma_bonus = G.hand.highlighted[1].ability.perma_bonus + 5
+end
+}
+
 G.localization.descriptions.Other["masquerade_reminder"] = {
         name = "Masquerade the Blazing Dragon", --tooltip name
        text = {
@@ -391,7 +626,6 @@ G.localization.descriptions.Other["masquerade_reminder"] = {
 		   "for every scoring card"
        }
    }
-   
 G.localization.descriptions.Joker['aluberbase'] =  {
         name = 'Aluber the Jester',
         text = {"If {C:attention}first discard{} of round", 
@@ -399,8 +633,7 @@ G.localization.descriptions.Joker['aluberbase'] =  {
             "it and {C:attention}transform{} this card",
 			"for the remainder of the blind"
 			},
-    }
-	
+    }	
 G.localization.descriptions.Joker['masquerade'] =  {
         name = 'Masquerade the Blazing Dragon',
         text = {"{C:chips}+25{} Chips", 
@@ -408,11 +641,9 @@ G.localization.descriptions.Joker['masquerade'] =  {
             "Reduces blind by 0.8%",
 			"for every scoring card"
 			},
-    }
-	
+    }	
 G.localization.descriptions.Joker['turtle'] =  {
         name = 'A Turtle',
         text = {"Not eternal"
 			},
     }
-end
