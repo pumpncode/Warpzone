@@ -38,7 +38,7 @@ SMODS.Joker {
     eternal_compat = true,
     perishable_compat = true,
     blueprint_compat = true,
-    rarity = 3,
+    rarity = 2,
     config = {
         transform = 0,
     },
@@ -56,23 +56,20 @@ SMODS.Joker {
             }
         end
     end,
-    -- Which atlas key to pull from.
     pos = { x = 0, y = 0 },
-    -- Cost of card in shop.
     cost = 8,
-    -- The functioning part of the joker, looks at context to decide what step of scoring the game is on, and then gives a 'return' value if something activates.
     calculate = function(self, card, context)
         if context.joker_main and card.ability.transform == 1 then
-            SMODS.eval_this(card, {
+            SMODS.calculate_effect({
                 message = localize { type = 'variable', key = 'a_chips', vars = {25}},
                 chip_mod = 25,
                 colour = G.C.CHIPS
-            })
-            SMODS.eval_this(card, {
+            }, card)
+            SMODS.calculate_effect({
                 message = localize { type = 'variable', key = 'a_mult', vars = {20}},
                 mult_mod = 20, 
                 colour = G.C.MULT
-            })
+            }, card)
         end
 
         if context.first_hand_drawn and card.ability.transform == 0 and not context.blueprint then
@@ -95,10 +92,10 @@ SMODS.Joker {
         end
         
         if context.before and card.ability.transform == 1 then
-            SMODS.eval_this(card, {
+            SMODS.calculate_effect({
                 message = "Tax",
                 colour = G.C.RED
-            })
+            }, card)
         end
 
         if context.individual then
@@ -138,7 +135,7 @@ SMODS.Joker {
         text = {
             "{C:mult}+1{} Mult per hand played", 
             "without beating the blind",
-            "{C:inactive}currently {C:mult}+#1# {C:inactive}Mult{}"
+            "{C:inactive}(currently {C:mult}+#1# {C:inactive}Mult){}"
         }
     },
     unlocked = true,
@@ -165,11 +162,11 @@ SMODS.Joker {
             }
         end
         
-        if context.after and context.cardarea == G.jokers then
+        if context.after and context.cardarea == G.jokers and not context.blueprint then
 		    if(G.GAME.chips + (hand_chips * mult) < G.GAME.blind.chips) then
                 card.ability.mult = card.ability.mult + 1
                 return {
-                    message = '+1 Mult',
+                    message = "+" .. tostring(card.ability.mult) .. " Mult",
                     card = card
                 }
 			end
@@ -299,7 +296,7 @@ SMODS.Joker {
             }
         end
         
-        if context.after and context.cardarea == G.jokers then
+        if context.after and context.cardarea == G.jokers and not context.blueprint then
 		    if hand_chips * mult > card.ability.score then
                 card.ability.xmult = card.ability.xmult + 0.1
 				card.ability.score = hand_chips * mult
@@ -447,18 +444,18 @@ SMODS.Joker {
 		end
 	if context.individual and context.cardarea == G.play then
 		if context.other_card:is_suit(card.ability.suit.suit1) and ((card.ability.rank.rank1 == "Ace" and context.other_card:get_id() == 1) or (card.ability.rank.rank1 == "Jack" and context.other_card:get_id() == 11) or (card.ability.rank.rank1 == "Queen" and context.other_card:get_id() == 12) or (card.ability.rank.rank1 == "King" and context.other_card:get_id() == 13) or context.other_card:get_id() == tonumber(card.ability.rank.rank1)) then
-			SMODS.eval_this(context.other_card, {
+			SMODS.calculate_effect({
                 message = localize { type = 'variable', key = 'a_chips', vars = {303}},
                 chip_mod = 303,
                 colour = G.C.CHIPS
-            })
+            },context.other_card)
 		end
 		if context.other_card:is_suit(card.ability.suit.suit2) and ((card.ability.rank.rank2 == "Ace" and context.other_card:get_id() == 1) or (card.ability.rank.rank2 == "Jack" and context.other_card:get_id() == 11) or (card.ability.rank.rank2 == "Queen" and context.other_card:get_id() == 12) or (card.ability.rank.rank2 == "King" and context.other_card:get_id() == 13) or context.other_card:get_id() == tonumber(card.ability.rank.rank2)) then
-			SMODS.eval_this(context.other_card, {
+			SMODS.calculate_effect({
                 message = localize { type = 'variable', key = 'a_mult', vars = {42}},
                 mult_mod = 42, 
                 colour = G.C.MULT
-            })
+            },context.other_card)
 		end
 		if context.other_card:is_suit(card.ability.suit.suit3) and ((card.ability.rank.rank3 == "Ace" and context.other_card:get_id() == 1) or (card.ability.rank.rank3 == "Jack" and context.other_card:get_id() == 11) or (card.ability.rank.rank3 == "Queen" and context.other_card:get_id() == 12) or (card.ability.rank.rank3 == "King" and context.other_card:get_id() == 13) or context.other_card:get_id() == tonumber(card.ability.rank.rank3)) then
 			return {
@@ -504,6 +501,98 @@ SMODS.Joker {
 			end
 		end,
 }
+SMODS.Joker {
+    key = "chcard",
+    name = "Character Card",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Character Card",
+        text = {
+            "Randomly gains, {C:money}${}, {C:chips}Chips{}, {C:mult}Mult{}",
+            "and {X:mult,C:white}XMult{} when beating a {C:attention}Blind{}",
+			"according to its {C:attention}difficulty{}",
+            "{C:inactive}(Currently {C:chips}+#1#{C:inactive}/{C:mult}+#2#{C:inactive}/{X:mult,C:white}X#3#{C:inactive}){}"
+        }
+    },
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 1,
+    pos = { x = 3, y = 2 },
+    cost = 6,
+    config = {
+        chips = 0,
+        mult = 0,
+        xmult = 1
+    },
+    loc_vars = function(self, info_queue, card)
+        return {
+            vars = {card.ability.chips, card.ability.mult, card.ability.xmult}
+        }
+    end,
+    calculate = function(self, card, context)
+        if context.joker_main and card.ability.chips > 0 then
+            SMODS.calculate_effect({
+                message = localize { type = 'variable', key = 'a_chips', vars = {card.ability.chips}},
+                chip_mod = card.ability.chips,
+                colour = G.C.CHIPS
+            }, card)
+        end
+        if context.joker_main and card.ability.mult > 0 then
+            SMODS.calculate_effect({
+                message = localize { type = 'variable', key = 'a_mult', vars = {card.ability.mult}},
+                mult_mod = card.ability.mult, 
+                colour = G.C.MULT
+            }, card)
+        end
+        if context.joker_main and card.ability.mult > 1 then
+            return {
+                Xmult_mod = card.ability.xmult,
+                message = localize { type = 'variable', key = 'a_xmult', vars = { card.ability.xmult } }
+            }
+        end
+		
+		if context.end_of_round and not context.repetition and context.game_over == false and not context.blueprint then
+			local diff
+			if G.GAME.blind:get_type() == "Small" then
+				diff = 1
+			elseif G.GAME.blind:get_type() == "Big" then
+				diff = 2
+			else
+				diff = 4
+			end
+			for i=1, diff do
+				local random = math.ceil(pseudorandom('chcard', 1, 4))
+				if random == 1 then
+					local randomvalue = math.ceil(pseudorandom('chcard', 1, 10))
+					card.ability.chips = card.ability.chips + randomvalue
+					SMODS.calculate_effect({
+						message = "+" .. tostring(randomvalue) .. " Chips", 
+					}, card)
+				elseif random == 2 then
+					local randomvalue = (math.ceil(pseudorandom('chcard', 1, 4)))/2
+					card.ability.mult = card.ability.mult + randomvalue
+					SMODS.calculate_effect({
+						message = "+" .. tostring(randomvalue) .. " Mult", 
+					}, card)
+				elseif random == 3 then
+					local randomvalue = (math.ceil(pseudorandom('chcard', 1, 4)))/20
+					card.ability.xmult = card.ability.xmult + randomvalue
+					SMODS.calculate_effect({
+						message = "X" .. tostring(randomvalue) .. " Mult", 
+					}, card)
+				else
+					SMODS.calculate_effect({
+						dollars = 1, 
+					}, card)
+				end
+			end
+		end
+	
+    end
+}
 
 SMODS.ConsumableType {
     key = 'GuestAppearance',
@@ -533,7 +622,7 @@ SMODS.Consumable{
         text = {
             "Choose one card, destroy all others",
 			"and create a {C:dark_edition}Negative {C:attention}\"Joker\"{}",
-			"with {C:mult}Mult bonus{} equal to half of the",
+			"with {C:mult}Mult bonus{} equal to half the",
 			"{C:attention}total ranks{} of all destroyed cards",
         }
     },
