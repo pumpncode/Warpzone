@@ -781,14 +781,15 @@ SMODS.Joker {
 			elseif card.ability.skill.type == 6 and card.ability.skill.attribute == 2 then
 				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 8 then
 					context.scoring_hand[math.ceil(pseudorandom('discojoker', 0.0000000000000000001, #context.scoring_hand))]:set_seal(SMODS.poll_seal({guaranteed = true, type_key = seal_type}))
-					SMODS.calculate_effect({
-						message = "Success!", 
-					}, card)
+					return {
+                        message = "Success!",
+                        remove = true,
+                    }
 				else
 					card.ability.dice.bonus = card.ability.dice.bonus + 1
-					SMODS.calculate_effect({
-						message = "Failure!", 
-					}, card)
+					return {
+                        message = "Failure!",
+                    }
 				end
 			elseif card.ability.skill.type == 1 and card.ability.skill.attribute == 3 then
 				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 30 then
@@ -1064,12 +1065,13 @@ SMODS.Joker {
 				card.ability.skill.type = 5
 				card.ability.skill.attribute = 2
 				card.ability.switch = 0
+				card:juice_up()
 			elseif context.card.ability.consumeable and card.ability.skill.type == 4 and card.ability.skill.attribute == 3 then
 				card.ability.skill.type = 1
 				card.ability.skill.attribute = 2
 				card.ability.switch = 0
+				card:juice_up()
 			end
-			card:juice_up()
 		end
 		if context.using_consumeable then
 			if card.ability.skill.type == 3 and card.ability.skill.attribute == 3 and card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 8 and not (context.consumeable.edition and context.consumeable.edition.negative) then
