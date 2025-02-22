@@ -22,6 +22,7 @@ SMODS.Atlas {
 }
 SMODS.Atlas {key = "modicon", path = "wzicon.png", px = 32, py = 32}
 SMODS.Atlas({key = 'guestapp', path = 'guest.png', px = 71, py = 95})
+SMODS.Atlas({key = 'disco', path = 'disco.png', px = 71, py = 95})
 
 SMODS.Joker {
     key = "aluber",
@@ -210,6 +211,7 @@ SMODS.Joker {
     pos = { x = 3, y = 0 },
     cost = 5,
     calculate = function(self, card, context)
+		if context.blueprint then return end
         if context.game_over and not card.ability.turtle then
 		    if pseudorandom('malganis') < G.GAME.probabilities.normal / 2 then
 			    card:flip()
@@ -371,6 +373,7 @@ SMODS.Joker {
         end
     end,
     calculate = function(self, card, context)
+		if context.blueprint then return end
         if context.cardarea == G.hand and G.GAME.current_round.hands_left == 0 and context.scoring_name == "High Card" then
             for i = 1, #G.hand.cards do
                 G.hand.cards[i]:start_dissolve()
@@ -420,12 +423,12 @@ SMODS.Joker {
     set_ability = function(self, card, initial, delay_sprites)
     local suits = { "Spades", "Hearts", "Clubs", "Diamonds" }
 		for i = 1, 3 do
-			local randomValue = math.ceil(pseudorandom('votv') * 4)
+			local randomValue = math.ceil(pseudorandom('votv', 0.0000000000000000001, 4))
 			card.ability.suit["suit" .. i] = suits[randomValue]
 		end
     local ranks = { [1] = "Ace", [11] = "Jack", [12] = "Queen", [13] = "King" }
 		for i = 1, 3 do
-			local randomRank = math.ceil(pseudorandom('votv') * 13)
+			local randomRank = math.ceil(pseudorandom('votv', 0.0000000000000000001, 13))
 			card.ability.rank["rank" .. i] = ranks[randomRank] or tostring(randomRank)
 		end
 	end,
@@ -433,12 +436,12 @@ SMODS.Joker {
 	if context.end_of_round and not context.repetition and context.game_over == false then
 		local suits = { "Spades", "Hearts", "Clubs", "Diamonds" }
 			for i = 1, 3 do
-				local randomValue = math.ceil(pseudorandom('votv') * 4)
+				local randomValue = math.ceil(pseudorandom('votv', 0.0000000000000000001, 4))
 				card.ability.suit["suit" .. i] = suits[randomValue]
 			end
 		local ranks = { [1] = "Ace", [11] = "Jack", [12] = "Queen", [13] = "King" }
 			for i = 1, 3 do
-				local randomRank = math.ceil(pseudorandom('votv') * 13)
+				local randomRank = math.ceil(pseudorandom('votv', 0.0000000000000000001, 13))
 				card.ability.rank["rank" .. i] = ranks[randomRank] or tostring(randomRank)
 			end
 		end
@@ -564,21 +567,21 @@ SMODS.Joker {
 				diff = 4
 			end
 			for i=1, diff do
-				local random = math.ceil(pseudorandom('chcard', 1, 4))
+				local random = math.ceil(pseudorandom('chcard', 0.0000000000000000001, 4))
 				if random == 1 then
-					local randomvalue = math.ceil(pseudorandom('chcard', 1, 10))
+					local randomvalue = math.ceil(pseudorandom('chcard', 0.0000000000000000001, 10))
 					card.ability.chips = card.ability.chips + randomvalue
 					SMODS.calculate_effect({
 						message = "+" .. tostring(randomvalue) .. " Chips", 
 					}, card)
-				elseif random == 2 then
-					local randomvalue = (math.ceil(pseudorandom('chcard', 1, 4)))/2
+				elseif random == 3 then
+					local randomvalue = (math.ceil(pseudorandom('chcard', 0.0000000000000000001, 4)))/2
 					card.ability.mult = card.ability.mult + randomvalue
 					SMODS.calculate_effect({
 						message = "+" .. tostring(randomvalue) .. " Mult", 
 					}, card)
-				elseif random == 3 then
-					local randomvalue = (math.ceil(pseudorandom('chcard', 1, 4)))/20
+				elseif random == 5 then
+					local randomvalue = (math.ceil(pseudorandom('chcard', 0.0000000000000000001, 4)))/20
 					card.ability.xmult = card.ability.xmult + randomvalue
 					SMODS.calculate_effect({
 						message = "X" .. tostring(randomvalue) .. " Mult", 
@@ -592,6 +595,527 @@ SMODS.Joker {
 		end
 	
     end
+}
+SMODS.Joker {
+    key = "discojoker",
+    name = "What Kind of Joker Are You?",
+    atlas = 'disco',
+    loc_txt = {
+        name = "What Kind of Joker Are You?",
+        text = {
+            "Effect {C:attention}changes{} after every hand",
+			"played, efficacy depends on",
+			"{C:green}random Dice Score{}"
+        }
+    },
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 3,
+	loc_vars = function(self, info_queue, card)
+		if card.ability.skill.type ~= 0 then
+		local totalbonus = 0
+			if (card.ability.skill.type == 4 or 5) and card.ability.skill.attribute == 1 then
+				local joker_count = 0
+				for i = 1, #G.jokers.cards do
+					local current = G.jokers.cards[i].label
+					if string.find(string.lower(current), "joker") then
+						joker_count = joker_count + 1
+					end
+				end
+				totalbonus = card.ability.dice.bonus + joker_count - 1
+				info_queue[#info_queue+1] = G.P_CENTERS.e_negative
+			else
+				totalbonus = card.ability.dice.bonus
+			if card.ability.skill.type == 3 and card.ability.skill.attribute == 3 then
+				info_queue[#info_queue+1] =  {key = 'e_negative_consumable', set = 'Edition', config = {extra = 1}}
+			end
+			end
+			info_queue[#info_queue + 1] = {
+							set = "Other",
+							key = 'discostats',
+							specific_vars = {(card.ability.dice.die1+card.ability.dice.die2),totalbonus,(card.ability.dice.die1+card.ability.dice.die2+totalbonus),card.ability.extra.mult,card.ability.extra.chips}, --table of the variable you want to pass on in the info_queue
+						}
+		end
+	    local skill_matrix = {
+		[1] = { [1] = 'logic', [2] = 'volition', [3] = 'endurance', [4] = 'handeye' },
+		[2] = { [1] = 'encyclopedia', [2] = 'inlandempire', [3] = 'painthreshold', [4] = 'perception' },
+		[3] = { [1] = 'rhetoric', [2] = 'empathy', [3] = 'physicalinstrument', [4] = 'reactionspeed' },
+		[4] = { [1] = 'drama', [2] = 'authority', [3] = 'electrochemistry', [4] = 'savoirfaire' },
+		[5] = { [1] = 'conceptualization', [2] = 'espritdecorps', [3] = 'shivers', [4] = 'interfacing' },
+		[6] = { [1] = 'visualcalculus', [2] = 'suggestion', [3] = 'halflight', [4] = 'composure' }
+		}
+
+		local skill_type = card.ability.skill.type
+		local skill_attribute = card.ability.skill.attribute
+
+		if skill_matrix[skill_type] and skill_matrix[skill_type][skill_attribute] then
+			return {
+				key = skill_matrix[skill_type][skill_attribute],
+				set = 'Joker'
+			}
+		end
+	end,
+	config = { 
+        skill = { 
+            type = 0,
+            attribute = 0
+        },
+        dice = {
+            die1 = 0,
+            die2 = -3,
+			bonus = 0
+        },
+		extra = { 
+            chips = 0,
+            mult = 0,
+			money = 0
+        },
+		switch = 0,
+		empathydiscard = 0,
+    },
+    pos = { x = 0, y = 0 },
+	soul_pos = { x = 0, y = 1 },
+    cost = 5,
+	update = function(self, card)
+		card.children.center:set_sprite_pos({x=card.ability.skill.type, y=card.ability.skill.attribute})
+		card.children.floating_sprite:set_sprite_pos({x=card.ability.dice.die1, y=card.ability.dice.die2+4})
+	end,
+    add_to_deck = function(self, card, from_debuff)
+		card.ability.skill.type = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 6))
+		card.ability.skill.attribute = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 4))
+		if next(SMODS.find_card('j_oops')) then
+			card.ability.dice.die1 = 6
+			card.ability.dice.die2 = 6
+		else
+			card.ability.dice.die1 = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 6))
+			card.ability.dice.die2 = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 6))
+		end
+	end,
+	calc_dollar_bonus = function(self, card)
+		local bonus = card.ability.extra.money
+		card.ability.extra.money = 0
+		if bonus > 0 then return bonus end
+	end,
+	calculate = function(self, card, context)
+		if context.joker_main then
+			if card.ability.extra.chips > 0 then
+				SMODS.calculate_effect({
+					message = localize { type = 'variable', key = 'a_chips', vars = {card.ability.extra.chips}},
+					chip_mod = card.ability.extra.chips,
+					colour = G.C.CHIPS
+				}, card)
+			end
+			if card.ability.extra.mult > 0 then
+				SMODS.calculate_effect({
+					message = localize { type = 'variable', key = 'a_mult', vars = {card.ability.extra.mult}},
+					mult_mod = card.ability.extra.mult, 
+					colour = G.C.MULT
+				}, card)
+			end
+			if card.ability.skill.type == 6 and card.ability.skill.attribute == 3 then
+				return {
+                Xmult_mod = (card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus)/4,
+                message = localize { type = 'variable', key = 'a_xmult', vars = { (card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus)/4 } }
+				}
+			end
+		end
+		if context.before then
+			if next(context.poker_hands['Pair']) and #context.scoring_hand == 2 and not context.blueprint and card.ability.skill.type == 1 and card.ability.skill.attribute == 2 then
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+					copy_card(context.scoring_hand[2],context.scoring_hand[1])
+					context.scoring_hand[1] = context.scoring_hand[2]
+				return true end}))
+			elseif card.ability.skill.type == 2 and card.ability.skill.attribute == 2 then
+				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 9 then
+					local _card = copy_card(context.scoring_hand[math.ceil(pseudorandom('discojoker', 0.0000000000000000001, #context.scoring_hand))], nil, nil, G.playing_card)
+					_card:add_to_deck()
+					G.deck.config.card_limit = G.deck.config.card_limit + 1
+					table.insert(G.playing_cards, _card)
+					G.hand:emplace(_card)
+					_card.states.visible = nil
+					G.E_MANAGER:add_event(Event({
+						func = function()
+							_card:start_materialize()
+							return true
+						end
+					})) 
+				return {
+					message = localize('k_copied_ex'),
+					colour = G.C.CHIPS,
+					card = card,
+					playing_cards_created = {true}
+				}
+				else
+					return {
+                        message = "Failure!",
+                    }
+				end
+			elseif card.ability.skill.type == 4 and card.ability.skill.attribute == 2 and next(context.poker_hands['Straight']) and card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 4 then
+				local lowest
+				local lowestvalue = 999
+				for i = 1, #context.scoring_hand do
+					if context.scoring_hand[i].base.id < lowestvalue then
+						lowestvalue = context.scoring_hand[i].base.id
+						lowest = i
+					end
+				end
+				context.scoring_hand[lowest].ability.perma_bonus = context.scoring_hand[lowest].ability.perma_bonus or 0
+				for i = 1, #context.scoring_hand do
+					if context.scoring_hand[i] ~= context.scoring_hand[lowest] then
+						context.scoring_hand[i].ability.perma_bonus = context.scoring_hand[i].ability.perma_bonus or 0
+						context.scoring_hand[i].ability.perma_bonus = context.scoring_hand[i].ability.perma_bonus + context.scoring_hand[lowest].base.nominal + context.scoring_hand[lowest].ability.perma_bonus
+						SMODS.calculate_effect({
+							extra = {message = localize('k_upgrade_ex'), colour = G.C.CHIPS},
+							colour = G.C.CHIPS,
+							}, context.scoring_hand[i])
+					end
+				end
+				context.scoring_hand[lowest]:start_dissolve()
+				for i = lowest, #context.scoring_hand - 1 do
+					context.scoring_hand[i] = context.scoring_hand[i + 1]
+				end
+				context.scoring_hand[#context.scoring_hand] = nil
+			elseif card.ability.skill.type == 6 and card.ability.skill.attribute == 2 then
+				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 8 then
+					context.scoring_hand[math.ceil(pseudorandom('discojoker', 0.0000000000000000001, #context.scoring_hand))]:set_seal(SMODS.poll_seal({guaranteed = true, type_key = seal_type}))
+					SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+				else
+					card.ability.dice.bonus = card.ability.dice.bonus + 1
+					SMODS.calculate_effect({
+						message = "Failure!", 
+					}, card)
+				end
+			elseif card.ability.skill.type == 1 and card.ability.skill.attribute == 3 then
+				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 30 then
+					G.GAME.round_resets.hands = G.GAME.round_resets.hands + 1
+					ease_hands_played(1)
+					SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+				else
+					card.ability.dice.bonus = card.ability.dice.bonus + 2
+					SMODS.calculate_effect({
+						message = "Failure!", 
+					}, card)
+				end
+			elseif card.ability.skill.type == 2 and card.ability.skill.attribute == 3 then
+				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 18 then
+					G.GAME.round_resets.discards = G.GAME.round_resets.discards + 1
+					ease_discard(1)
+					SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+				else
+					card.ability.dice.bonus = card.ability.dice.bonus + 1
+					SMODS.calculate_effect({
+						message = "Failure!", 
+					}, card)
+				end
+			elseif card.ability.skill.type == 1 and card.ability.skill.attribute == 4 then
+				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 20 then
+					G.hand:change_size(1)
+					SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+				else
+					card.ability.dice.bonus = card.ability.dice.bonus + 1
+					SMODS.calculate_effect({
+						message = "Failure!", 
+					}, card)
+				end
+			elseif card.ability.skill.type == 5 and card.ability.skill.attribute == 3 then
+				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 10 then
+					G.E_MANAGER:add_event(Event({
+						func = (function()
+						add_tag(Tag('tag_ethereal'))
+						play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
+						play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
+						return true
+						end)
+						}))
+					SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+				else
+					SMODS.calculate_effect({
+						message = "Failure!", 
+					}, card)
+				end
+			elseif 
+				card.ability.skill.type == 4 and card.ability.skill.attribute == 4 then
+					if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 10 then
+						SMODS.calculate_effect({
+							message = "Success!", 
+							}, card)
+						for k, v in ipairs(context.scoring_hand) do
+							if v.ability.set ~= "enhanced" then
+								v:set_ability(G.P_CENTERS[SMODS.poll_enhancement({guaranteed = true})])
+							end
+						end
+					else
+						SMODS.calculate_effect({
+							message = "Failure!", 
+							}, card)
+					end
+			elseif card.ability.skill.type == 2 and card.ability.skill.attribute == 4 then
+				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 4 and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+					for i = 1, G.consumeables.config.card_limit - #G.consumeables.cards - G.GAME.consumeable_buffer do
+						local world = create_card('Tarot', G.consumeables, nil, nil, nil,true,'c_world')
+						world:add_to_deck()
+						G.consumeables:emplace(world)
+						G.GAME.consumeable_buffer = 0
+						SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+					end
+				elseif card.ability.dice.die2 + card.ability.dice.bonus <= 4 then
+					card.ability.dice.bonus = card.ability.dice.bonus + 3
+					SMODS.calculate_effect({
+						message = "Failure!", 
+					}, card)
+				end
+			elseif card.ability.skill.type == 5 and card.ability.skill.attribute == 4 and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+				local planet
+				card:juice_up()
+				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus <= 7 then
+					planet = create_card('Planet', G.consumeables, nil, nil, nil, nil, nil)
+				elseif card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus <= 14 then
+					local _handname, _played, _order = 'High Card', -1, 100
+					for k, v in pairs(G.GAME.hands) do
+						if v.played > _played or (v.played == _played and _order > v.order) then
+							_played = v.played
+							_handname = k
+						end
+					end
+					for k, v in pairs(G.P_CENTER_POOLS.Planet) do
+						if v.config.hand_type == _handname then
+							planet = create_card('Planet', G.consumeables, nil, nil, nil, true, v.key)
+						end
+					end
+				else
+					planet = create_card('Spectral', G.consumeables, nil, nil, nil, true, 'c_black_hole')
+				end
+				planet:add_to_deck()
+				G.consumeables:emplace(planet)
+				G.GAME.consumeable_buffer = 0
+			elseif card.ability.skill.type == 6 and card.ability.skill.attribute == 4 then
+				local _handname, _played, _order = 'High Card', -1, 100
+				for k, v in pairs(G.GAME.hands) do
+					if v.played > _played or (v.played == _played and _order > v.order) then
+						_played = v.played
+						_handname = k
+					end
+				end
+				if next(context.poker_hands[_handname]) then
+					card.ability.extra.mult = card.ability.extra.mult + card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus
+					SMODS.calculate_effect({
+						message = "Upgrade", 
+					}, card)
+				end
+			end
+		end
+		if context.before and context.cardarea == G.jokers then
+			if card.ability.skill.type == 2 and card.ability.skill.attribute == 1 then
+				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 7 then
+					card.ability.extra.chips = card.ability.extra.chips + 20
+					SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+				else
+					card.ability.dice.bonus = card.ability.dice.bonus + 1
+					SMODS.calculate_effect({
+						message = "Failure!", 
+					}, card)
+				end
+			elseif (card.ability.skill.type == 4 or card.ability.skill.type == 5) and card.ability.skill.attribute == 1 then
+				local joker_count = 0
+				for i = 1, #G.jokers.cards do
+					local current = G.jokers.cards[i].label
+					if string.find(string.lower(current), "joker") then
+						joker_count = joker_count + 1
+					end
+				end
+				if card.ability.skill.type == 4 and joker_count + card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus - 1 >= 12 then
+					local nega_jimbo = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_joker")
+					nega_jimbo:set_edition({negative = true})
+					nega_jimbo:add_to_deck()
+					G.jokers:emplace(nega_jimbo)
+					SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+				elseif card.ability.skill.type == 5 and joker_count + card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus - 1 >= 20 then
+					local nega_abstract = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_abstract")
+					nega_abstract:set_edition({negative = true})
+					nega_abstract:add_to_deck()
+					G.jokers:emplace(nega_abstract)
+					SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+				else
+					SMODS.calculate_effect({
+						message = "Failure!", 
+					}, card)
+				end
+			elseif card.ability.skill.type == 3 and card.ability.skill.attribute == 2 then
+				if card.ability.empathydiscard == 1 then
+					card.ability.empathydiscard = 0
+				else
+					card.ability.extra.mult = card.ability.extra.mult + card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus
+				SMODS.calculate_effect({
+						message = "Upgrade", 
+					}, card)
+				end
+			end
+		end
+		if context.after and context.cardarea == G.jokers then
+			if (G.GAME.chips + (hand_chips * mult) > G.GAME.blind.chips) and card.ability.skill.type == 1 and card.ability.skill.attribute == 1 then
+				card.ability.extra.mult = card.ability.extra.mult + card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus
+				SMODS.calculate_effect({
+						message = "Upgrade", 
+					}, card)
+			end
+			if card.ability.skill.type == 5 and card.ability.skill.attribute == 2 then
+				card.ability.extra.money = card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus
+				SMODS.calculate_effect({
+						message = "Success!", 
+					}, card)
+			end
+			card.ability.switch = 1
+		end
+		if context.discard then
+			if card.ability.skill.type == 3 and card.ability.skill.attribute == 1 then
+				if #context.full_hand == 1 then
+					card.ability.dice.bonus = card.ability.dice.bonus + 1
+					if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 10 then
+						return {
+						message = "Upgrade",
+						delay = 0.45, 
+						remove = true,
+						card = card
+						}
+					else
+						return {
+						message = "Upgrade",
+						delay = 0.45,
+						card = card
+						}
+					end
+				end
+			elseif card.ability.skill.type == 3 and card.ability.skill.attribute == 2 then
+				card.ability.empathydiscard = 1
+				return {
+					message = "Failure!",
+					}
+			end
+		end
+		if context.individual and context.cardarea == G.play then
+			if card.ability.skill.type == 6 and card.ability.skill.attribute == 1 then
+				context.other_card.ability.perma_bonus = context.other_card.ability.perma_bonus or 0
+				context.other_card.ability.perma_bonus = context.other_card.ability.perma_bonus + card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus
+				return {
+					extra = {message = localize('k_upgrade_ex'), colour = G.C.CHIPS},
+					colour = G.C.CHIPS,
+					card = card
+				}
+			end
+		end
+		if context.hand_drawn and card.ability.switch == 1 then
+			card.ability.switch = 0
+			if hand_chips then
+				if hand_chips * mult < G.GAME.blind.chips/5 and not (card.ability.skill.type == 6 and card.ability.skill.attribute == 3)then
+					card.ability.skill.type = 6
+					card.ability.skill.attribute = 3
+				else
+				card.ability.skill.type = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 6))
+				card.ability.skill.attribute = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 4))
+				end
+			else
+				card.ability.skill.type = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 6))
+				card.ability.skill.attribute = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 4))
+			end
+			if next(SMODS.find_card('j_oops')) then
+				card.ability.dice.die1 = 6
+				card.ability.dice.die2 = 6
+			else
+				card.ability.dice.die1 = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 6))
+				card.ability.dice.die2 = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 6))
+			card:juice_up()
+			end
+		end
+		if context.game_over and card.ability.skill.type == 1 and card.ability.skill.attribute == 2 then
+			if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 12 then
+				return {
+                        message = "Success!",
+                        saved = true,
+                    }
+			else
+				return {
+                        message = "Failure!",
+                    }
+			end
+		end
+		if context.selling_card then
+			if context.card.config.center_key == 'j_burglar' then
+				card.ability.skill.type = 5
+				card.ability.skill.attribute = 2
+				card.ability.switch = 0
+			elseif context.card.ability.consumeable and card.ability.skill.type == 4 and card.ability.skill.attribute == 3 then
+				card.ability.skill.type = 1
+				card.ability.skill.attribute = 2
+				card.ability.switch = 0
+			end
+			card:juice_up()
+		end
+		if context.using_consumeable then
+			if card.ability.skill.type == 3 and card.ability.skill.attribute == 3 and card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 8 and not (context.consumeable.edition and context.consumeable.edition.negative) then
+				local negconsumeable = copy_card(context.consumeable)
+				negconsumeable:set_edition({negative = true})
+				negconsumeable:add_to_deck()
+				G.consumeables:emplace(negconsumeable)
+				card.ability.dice.die1 = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 6))
+				card.ability.dice.die2 = math.ceil(pseudorandom('discojoker', 0.0000000000000000001, 6))
+				card:juice_up()
+				return {
+                        message = "Copied"
+                    }
+			elseif card.ability.skill.type == 4 and card.ability.skill.attribute == 3 then
+				card.ability.extra.chips = card.ability.extra.chips + card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus
+				return {
+						message = "Upgrade",
+						delay = 0.45,
+						card = card
+						}
+			end
+		end
+		if context.pre_discard and card.ability.skill.type == 3 and card.ability.skill.attribute == 4 then
+			local upgradetimes = 1
+			local text,disp_text = G.FUNCS.get_poker_hand_info(G.hand.highlighted)
+			local _handname, _played, _order = 'High Card', -1, 100
+			for k, v in pairs(G.GAME.hands) do
+				if v.played > _played or (v.played == _played and _order > v.order) then
+				_played = v.played
+				_handname = k
+				end
+			end
+			if _handname == text then
+				if (card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus)/10 >= 1 then
+					upgradetimes = math.floor((card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus)/10 + 0.5)
+				end
+				card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = localize('k_upgrade_ex')})
+				for i = 1, upgradetimes do
+					update_hand_text({sound = 'button', volume = 0.7, pitch = 0.8, delay = 0.3}, {handname=localize(text, 'poker_hands'),chips = G.GAME.hands[text].chips, mult = G.GAME.hands[text].mult, level=G.GAME.hands[text].level})
+					level_up_hand(context.blueprint_card or card, text, nil, 1)
+				end
+			update_hand_text({sound = 'button', volume = 0.7, pitch = 1.1, delay = 0}, {mult = 0, chips = 0, handname = '', level = ''})
+            card.ability.switch = 1
+			end
+		end
+	end		
 }
 
 SMODS.ConsumableType {
@@ -621,14 +1145,14 @@ SMODS.Consumable{
         name = "Fiend Fire",
         text = {
             "Choose one card, destroy all others",
-			"and create a {C:dark_edition}Negative {C:attention}\"Joker\"{}",
+			"and create a {C:dark_edition}Negative \"{C:attention}Joker{}\"",
 			"with {C:mult}Mult bonus{} equal to half the",
 			"{C:attention}total ranks{} of all destroyed cards",
         }
     },
 	pos = { x = 0, y = 0 },
 	can_use = function(self, card)
-    if G.hand and (G.hand.highlighted and #G.hand.highlighted == 1) then
+    if G.hand and (G.hand.highlighted and #G.hand.highlighted == 1) and #G.hand.cards > 1 then
         return true
     end    
 end,    
@@ -652,6 +1176,9 @@ use = function(self, card)
 			custom_jimbo.ability.mult = totalrank / 2
             custom_jimbo:add_to_deck()
             G.jokers:emplace(custom_jimbo)
+	G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.2,func = function()
+            G.hand:unhighlight_all();
+        return true end }))
 end
 }
 SMODS.Consumable{
@@ -697,12 +1224,14 @@ SMODS.Consumable{
     end    
 end,    
 use = function(self, card)
-	local seals = {"Blue","Red","Gold","Purple"}
 	local edition = poll_edition('armament',nil,true,true)
 	G.hand.highlighted[1]:set_ability(G.P_CENTERS[SMODS.poll_enhancement({guaranteed = true})])
-	G.hand.highlighted[1]:set_seal(seals[pseudorandom('armaments', 1, 4)], nil, true)
+	G.hand.highlighted[1]:set_seal(SMODS.poll_seal({guaranteed = true, type_key = seal_type}))
 	G.hand.highlighted[1]:set_edition(edition,true)
 	G.hand.highlighted[1].ability.perma_bonus = G.hand.highlighted[1].ability.perma_bonus + 5
+	G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.2,func = function()
+            G.hand:unhighlight_all();
+        return true end }))
 end
 }
 
@@ -713,6 +1242,15 @@ G.localization.descriptions.Other["masquerade_reminder"] = {
            "{C:mult}+20{} Mult",
            "Reduces blind by 0.8%",
 		   "for every scoring card"
+       }
+   }
+G.localization.descriptions.Other["discostats"] = {
+        name = "Joker Stats",
+       text = {
+           "{C:chips}+#5#{} Chips",
+           "{C:mult}+#4#{} Mult",
+           "{C:green}Dice Score:",
+		   "{C:green}#3# (#1# + #2# Bonus)"
        }
    }
 G.localization.descriptions.Joker['aluberbase'] =  {
@@ -734,5 +1272,184 @@ G.localization.descriptions.Joker['masquerade'] =  {
 G.localization.descriptions.Joker['turtle'] =  {
         name = 'A Turtle',
         text = {"Not eternal"
+			},
+    }
+G.localization.descriptions.Joker['logic'] =  {
+        name = 'Logic',
+        text = {"Gains {C:mult}Mult{} equal to",
+			"{C:green}Dice Score{} if hand",
+			"beats the blind"
+			},
+    }
+G.localization.descriptions.Joker['encyclopedia'] =  {
+        name = 'Encyclopedia',
+        text = {"Gains {C:chips}+20{} chips when hand is",
+			"played if Dice Score is {C:green}7 or{},",
+			"more, gains {C:green}+1{} permanent",
+			"Dice Score otherwise"
+			},
+    }
+G.localization.descriptions.Joker['rhetoric'] =  {
+        name = 'Rhetoric',
+        text = {"Gains {C:green}+1{} permanent dice",
+			"score whenever you discard only",
+			"{C:attention}1{} card, also destroy it if Dice",
+			"Score becomes {C:green}10 or more{}"
+			},
+    }
+G.localization.descriptions.Joker['drama'] =  {
+        name = 'Drama',
+        text = {"Creates {C:attention}1{} {C:dark_edition}Negative{} \"{C:attention}Joker{}\" when",
+			"hand is played if Dice Score is {C:green}12",
+			"{C:green}or more{}, jokers with \"{C:attention}Joker{}\"",
+			"{C:attention}in name{} grant {C:green}+1{} Dice Score"
+			},
+    }
+G.localization.descriptions.Joker['conceptualization'] =  {
+        name = 'Conceptualization',
+        text = {"Creates {C:attention}1{} {C:dark_edition}Negative{} \"{C:attention}Abstract Joker{}\"",
+			"when hand is played if Dice Score is {C:green}20",
+			"{C:green}or more{}, jokers with \"{C:attention}Joker{}\"",
+			"in name grant {C:green}+1{} Dice Score"
+			},
+    }
+G.localization.descriptions.Joker['visualcalculus'] =  {
+        name = 'Visual Calculus',
+        text = {"Every played {C:attention}card{} permanently",
+			"gains {C:chips}Chips{} equal to {C:green}Dice",
+			"{C:green}Score{} when scored"
+			},
+    }
+G.localization.descriptions.Joker['volition'] =  {
+        name = 'Volition',
+        text = {"Converts the {C:attention}left{} card into the {C:attention}right{}",
+			"card if played hand is a {C:attention}Pair{}, prevents",
+			"Death if Dice Score is {C:green}12 or more{}"
+			},
+    }
+G.localization.descriptions.Joker['inlandempire'] =  {
+        name = 'Inland Empire',
+        text = {"Adds a permanent copy of a random played card",
+			"to deck and draw it to {C:attention}hand{}, add a random",
+			"{C:attention}Edition{} to it if Dice Score is {C:green}9 or more{}"
+			},
+    }
+G.localization.descriptions.Joker['empathy'] =  {
+        name = 'Empathy',
+        text = {"Gains {C:mult}Mult{} equal to",
+			"{C:green}Dice Score{} if hand is played",
+			"without {C:attention}discarding{} any card"
+			},
+    }
+G.localization.descriptions.Joker['authority'] =  {
+        name = 'Authority',
+        text = {"Destroys the lowest card in {C:attention}hand{} and",
+			"gives {C:attention}double{} its {C:chips}Chips{} to all other",
+			"ones if played hand is a {C:attention}Straight{}",
+			"and Dice Score is {C:green}4 or more{}"
+			},
+    }
+G.localization.descriptions.Joker['espritdecorps'] =  {
+        name = 'Esprit de Corps',
+        text = {"Earns {C:money}${} equal to {C:green}Dice Score{}",
+			"when hand is played, also {C:attention}appears{}",
+			"when you sell a \"{C:attention}Burglar{}\"",
+			},
+    }
+G.localization.descriptions.Joker['suggestion'] =  {
+        name = 'Suggestion',
+        text = {"Add a random {C:attention}Seal{} to a random",
+			"played card if Dice Score is {C:green}8",
+			"{C:green}or more{}, gains {C:green}+1{} permanent",
+			"Dice Score otherwise",
+			},
+    }
+G.localization.descriptions.Joker['endurance'] =  {
+        name = 'Endurance',
+        text = {"Gains {C:chips}+1{} hand when hand is",
+			"played if Dice Score is {C:green}30 or",
+			"{C:green}more{}, gains {C:green}+2{} permanent",
+			" Dice Score otherwise"
+			},
+    }
+G.localization.descriptions.Joker['painthreshold'] =  {
+        name = 'Pain Threshold',
+        text = {"Gains {C:mult}+1{} discard when hand is",
+			"played if Dice Score is {C:green}18 or",
+			"{C:green}more{}, gains {C:green}+1{} permanent",
+			" Dice Score otherwise"
+			},
+    }
+G.localization.descriptions.Joker['physicalinstrument'] =  {
+        name = 'Physical Instrument',
+        text = {"Creates a {C:dark_edition}Negative{} copy of every",
+			"non-{C:dark_edition}negative{} {C:attention}Consumable{} you use if",
+			"Dice Score is {C:green}8 or more{}, {C:attention}rerolls{}",
+			"dice after every use"
+			},
+    }
+G.localization.descriptions.Joker['electrochemistry'] =  {
+        name = 'Electrochemistry',
+        text = {"Gains {C:chips}Chips{} equal to {C:green}Dice Score{} when",
+			"you use a {C:attention}Consumable{}, swaps",
+			"to \"{C:purple}Volition{}\" if you sell one"
+			},
+    }
+G.localization.descriptions.Joker['shivers'] =  {
+        name = 'Shivers',
+        text = {"Creates an {C:attention}Etheral Tag{} when hand",
+			"is played if Dice Score is",
+			"{C:green}10 or more{}"
+			},
+    }
+G.localization.descriptions.Joker['halflight'] =  {
+        name = 'Half Light',
+        text = {"{X:mult,C:white}XMult{} equal to {C:attention}1/4{} of {C:green}Dice Score{},",
+			"always {C:attention}appears{} if previous {C:attention}hand{} scored",
+			"less than {C:attention}1/5{} of blind's required score"
+			},
+    }
+G.localization.descriptions.Joker['handeye'] =  {
+        name = 'Hand/Eye Coordination',
+        text = {"Gains {C:attention}+1{} hand size when hand is",
+			"played if Dice Score is {C:green}20 or",
+			"{C:green}more{}, gains {C:green}+1{} permanent",
+			" Dice Score otherwise"
+			},
+    }
+G.localization.descriptions.Joker['perception'] =  {
+        name = 'Perception',
+        text = {"Fills consumable slots with copies of \"{C:tarot}The World (XXI){}\"",
+			"when hand is played if Dice Score is {C:green}4 or {C:green}more{},",
+			"gains {C:green}+3{} permanent Dice Score otherwise"
+			},
+    }
+G.localization.descriptions.Joker['reactionspeed'] =  {
+        name = 'Reaction Speed',
+        text = {"{C:attention}Discard{} your {C:attention}most played{} poker hand",
+			"to upgrade it a number of times equal",
+			"to {C:attention}1/10{} of your {C:green}Dice Score {C:inactive}(rounded,",
+			"{C:inactive}minimum 1){} and {C:attention}transform{} this again"
+			},
+    }
+G.localization.descriptions.Joker['savoirfaire'] =  {
+        name = 'Savoir Faire',
+        text = {"{C:attention}Enhance{} all unhenanced cards in",
+			"played hand if Dice Score is {C:green}10",
+			"{C:green}or more{}"
+			},
+    }
+G.localization.descriptions.Joker['interfacing'] =  {
+        name = 'Interfacing',
+        text = {"Creates a {C:planet}Planet{} card when hand is",
+			"played, result varies depending on",
+			"{C:green}Dice Score{}..."
+			},
+    }
+G.localization.descriptions.Joker['composure'] =  {
+        name = 'Composure',
+        text = {"Gains {C:mult}Mult{} equal to",
+			"{C:green}Dice Score{} if you play",
+			"your {C:attention}most played poker{} hand"
 			},
     }
