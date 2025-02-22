@@ -755,35 +755,31 @@ SMODS.Joker {
 				end
 			elseif card.ability.skill.type == 4 and card.ability.skill.attribute == 2 and next(context.poker_hands['Straight']) and card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 4 then
 				local lowest
-				local lowestvalue = 999
-				for i = 1, #context.scoring_hand do
-					if context.scoring_hand[i].base.id < lowestvalue then
-						lowestvalue = context.scoring_hand[i].base.id
-						lowest = i
-					end
+			local lowestvalue = 999
+			for i = 1, #context.scoring_hand do
+				if context.scoring_hand[i].base.id < lowestvalue then
+					lowestvalue = context.scoring_hand[i].base.id
+					lowest = i
 				end
-				context.scoring_hand[lowest].ability.perma_bonus = context.scoring_hand[lowest].ability.perma_bonus or 0
-				for i = 1, #context.scoring_hand do
-					if context.scoring_hand[i] ~= context.scoring_hand[lowest] then
-						context.scoring_hand[i].ability.perma_bonus = context.scoring_hand[i].ability.perma_bonus or 0
-						context.scoring_hand[i].ability.perma_bonus = context.scoring_hand[i].ability.perma_bonus + context.scoring_hand[lowest].base.nominal + context.scoring_hand[lowest].ability.perma_bonus
-						SMODS.calculate_effect({
-							extra = {message = localize('k_upgrade_ex'), colour = G.C.CHIPS},
-							colour = G.C.CHIPS,
-							}, context.scoring_hand[i])
-					end
+			end
+			context.scoring_hand[lowest].ability.perma_bonus = context.scoring_hand[lowest].ability.perma_bonus or 0
+			context.scoring_hand[lowest].destroy_me_pls = true
+			for i = 1, #context.scoring_hand do
+				if context.scoring_hand[i] ~= context.scoring_hand[lowest] then
+					context.scoring_hand[i].ability.perma_bonus = context.scoring_hand[i].ability.perma_bonus or 0
+					context.scoring_hand[i].ability.perma_bonus = context.scoring_hand[i].ability.perma_bonus + context.scoring_hand[lowest].base.nominal + context.scoring_hand[lowest].ability.perma_bonus
+					SMODS.calculate_effect({
+						extra = {message = localize('k_upgrade_ex'), colour = G.C.CHIPS},
+						colour = G.C.CHIPS,
+						}, context.scoring_hand[i])
 				end
-				context.scoring_hand[lowest]:start_dissolve()
-				for i = lowest, #context.scoring_hand - 1 do
-					context.scoring_hand[i] = context.scoring_hand[i + 1]
-				end
-				context.scoring_hand[#context.scoring_hand] = nil
+			end
+			print(context.scoring_hand[lowest])
 			elseif card.ability.skill.type == 6 and card.ability.skill.attribute == 2 then
 				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 8 then
 					context.scoring_hand[math.ceil(pseudorandom('discojoker', 0.0000000000000000001, #context.scoring_hand))]:set_seal(SMODS.poll_seal({guaranteed = true, type_key = seal_type}))
 					return {
                         message = "Success!",
-                        remove = true,
                     }
 				else
 					card.ability.dice.bonus = card.ability.dice.bonus + 1
@@ -1116,6 +1112,15 @@ SMODS.Joker {
 			update_hand_text({sound = 'button', volume = 0.7, pitch = 1.1, delay = 0}, {mult = 0, chips = 0, handname = '', level = ''})
             card.ability.switch = 1
 			end
+			if context.destroying_card then
+				print(context.destroying_card.destroy_me_pls)
+			end
+		end
+		if context.destroying_card and context.destroying_card.destroy_me_pls then
+		print("test")
+			return {
+					remove = true
+				}
 		end
 	end		
 }
