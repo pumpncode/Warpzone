@@ -729,30 +729,28 @@ SMODS.Joker {
 					context.scoring_hand[1] = context.scoring_hand[2]
 				return true end}))
 			elseif card.ability.skill.type == 2 and card.ability.skill.attribute == 2 then
+				local _card = copy_card(context.scoring_hand[math.ceil(pseudorandom('discojoker', 0.0000000000000000001, #context.scoring_hand))], nil, nil, G.playing_card)
 				if card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 9 then
-					local _card = copy_card(context.scoring_hand[math.ceil(pseudorandom('discojoker', 0.0000000000000000001, #context.scoring_hand))], nil, nil, G.playing_card)
-					_card:add_to_deck()
-					G.deck.config.card_limit = G.deck.config.card_limit + 1
-					table.insert(G.playing_cards, _card)
-					G.hand:emplace(_card)
-					_card.states.visible = nil
-					G.E_MANAGER:add_event(Event({
-						func = function()
-							_card:start_materialize()
-							return true
+							local edition = poll_edition('discojoker',nil,true,true)
+							_card:set_edition(edition, true)
 						end
-					})) 
-				return {
-					message = localize('k_copied_ex'),
-					colour = G.C.CHIPS,
-					card = card,
-					playing_cards_created = {true}
-				}
-				else
-					return {
-                        message = "Failure!",
-                    }
-				end
+				_card:add_to_deck()
+				G.deck.config.card_limit = G.deck.config.card_limit + 1
+				table.insert(G.playing_cards, _card)
+				G.hand:emplace(_card)
+				_card.states.visible = nil
+				G.E_MANAGER:add_event(Event({
+					func = function()
+						_card:start_materialize()
+						return true
+					end
+				})) 
+			return {
+				message = localize('k_copied_ex'),
+				colour = G.C.CHIPS,
+				card = card,
+				playing_cards_created = {true}
+			}
 			elseif card.ability.skill.type == 4 and card.ability.skill.attribute == 2 and next(context.poker_hands['Straight']) and card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus >= 4 then
 				local lowest
 			local lowestvalue = 999
@@ -1390,7 +1388,7 @@ G.localization.descriptions.Joker['painthreshold'] =  {
 G.localization.descriptions.Joker['physicalinstrument'] =  {
         name = 'Physical Instrument',
         text = {"Creates a {C:dark_edition}Negative{} copy of every",
-			"non-{C:dark_edition}negative{} {C:attention}Consumable{} you use if",
+			"non-{C:dark_edition}Negative{} {C:attention}Consumable{} you use if",
 			"Dice Score is {C:green}8 or more{}, {C:attention}rerolls{}",
 			"dice after every use"
 			},
