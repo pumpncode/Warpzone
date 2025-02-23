@@ -400,9 +400,9 @@ SMODS.Joker {
     eternal_compat = true,
     perishable_compat = true,
     blueprint_compat = true,
-    rarity = 3,
+    rarity = 2,
     pos = { x = 1, y = 2 },
-    cost = 8,
+    cost = 5,
     config = { 
         suit = { 
             suit1 = "Spades",
@@ -560,11 +560,11 @@ SMODS.Joker {
 		if context.end_of_round and not context.repetition and context.game_over == false and not context.blueprint then
 			local diff
 			if G.GAME.blind:get_type() == "Small" then
-				diff = 1
-			elseif G.GAME.blind:get_type() == "Big" then
 				diff = 2
-			else
+			elseif G.GAME.blind:get_type() == "Big" then
 				diff = 4
+			else
+				diff = 8
 			end
 			for i=1, diff do
 				local random = math.ceil(pseudorandom('chcard', 0.0000000000000000001, 4))
@@ -848,7 +848,7 @@ SMODS.Joker {
 							message = "Success!", 
 							}, card)
 						for k, v in ipairs(context.scoring_hand) do
-							if v.ability.set ~= "enhanced" then
+							if v.ability.set ~= "Enhanced" then
 								v:set_ability(G.P_CENTERS[SMODS.poll_enhancement({guaranteed = true})])
 							end
 						end
@@ -1439,7 +1439,7 @@ G.localization.descriptions.Joker['reactionspeed'] =  {
     }
 G.localization.descriptions.Joker['savoirfaire'] =  {
         name = 'Savoir Faire',
-        text = {"{C:attention}Enhance{} all unhenanced cards in",
+        text = {"{C:attention}Enhance{} all unenhanced cards in",
 			"played hand if Dice Score is {C:green}10",
 			"{C:green}or more{}"
 			},
