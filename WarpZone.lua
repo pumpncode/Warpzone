@@ -1150,9 +1150,8 @@ SMODS.Joker {
     if context.individual and context.cardarea == G.play then
         if context.other_card == context.scoring_hand[#context.scoring_hand] then
 			return {
-				chip_mod = G.GAME.chips,
-				colour = G.C.CHIPS,
-				message = "X2 Chips"
+				xchips = 2,
+				card = context.scoring_hand[#context.scoring_hand]
 				}
 			end
 		end
