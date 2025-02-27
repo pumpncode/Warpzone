@@ -278,7 +278,7 @@ SMODS.Joker {
     eternal_compat = true,
     perishable_compat = true,
     blueprint_compat = true,
-    rarity = 3,
+    rarity = 2,
     config = {
         xmult = 1,
 		score = 0,
@@ -617,7 +617,7 @@ SMODS.Joker {
 	loc_vars = function(self, info_queue, card)
 		if card.ability.skill.type ~= 0 then
 		local totalbonus = 0
-			if (card.ability.skill.type == 4 or 5) and card.ability.skill.attribute == 1 then
+			if (card.ability.skill.type == 4 or card.ability.skill.type == 5) and card.ability.skill.attribute == 1 then
 				local joker_count = 0
 				for i = 1, #G.jokers.cards do
 					local current = G.jokers.cards[i].label
@@ -626,13 +626,18 @@ SMODS.Joker {
 					end
 				end
 				totalbonus = card.ability.dice.bonus + joker_count - 1
-				info_queue[#info_queue+1] = G.P_CENTERS.e_negative
 			else
 				totalbonus = card.ability.dice.bonus
+			end
 			if card.ability.skill.type == 3 and card.ability.skill.attribute == 3 then
 				info_queue[#info_queue+1] =  {key = 'e_negative_consumable', set = 'Edition', config = {extra = 1}}
 			end
+			if card.ability.skill.type == 4 or card.ability.skill.type == 5 then
+				if card.ability.skill.attribute == 1 then
+					info_queue[#info_queue+1] = {key = 'e_negative', set = 'Edition', config = {extra = 1}}
+				end
 			end
+			
 			info_queue[#info_queue + 1] = {
 							set = "Other",
 							key = 'discostats',
@@ -1121,6 +1126,94 @@ SMODS.Joker {
 				}
 		end
 	end		
+}
+SMODS.Joker {
+    key = "horn",
+    name = "Joker's Horn",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Joker's Horn",
+        text = {
+            "Last played card gives",
+			"{X:chips,C:white}X2{} Chips when scored",
+        }
+    },
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 1,
+    pos = { x = 4, y = 2 },
+    cost = 4,
+    calculate = function(self, card, context)
+    if context.individual and context.cardarea == G.play then
+        if context.other_card == context.scoring_hand[#context.scoring_hand] then
+			return {
+				chip_mod = G.GAME.chips,
+				colour = G.C.CHIPS,
+				message = "X2 Chips"
+				}
+			end
+		end
+	end 
+
+}
+SMODS.Joker {
+    key = "hollowness",
+    name = "Hollowness",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Hollowness",
+        text = {
+            "After {C:attention}2{} rounds, sell ",
+			"this card to make all",
+			"cards in hand {C:dark_edition}Negative{}",
+			"{C:inactive}(Currently {C:attention}#1#{C:inactive}/2)"
+        }
+    },
+	config = {loyalty_remaining = 0
+	},
+	loc_vars = function(self, info_queue, card)
+		info_queue[#info_queue+1] =  {key = 'e_negative_playing_card', set = 'Edition', config = {extra = 1}}
+		return {
+            vars = {card.ability.loyalty_remaining}
+        }
+	end,
+    unlocked = true,
+    discovered = true,
+    eternal_compat = false,
+    perishable_compat = true,
+    blueprint_compat = false,
+    rarity = 3,
+    pos = { x = 0, y = 3 },
+    cost = 3,
+	calculate = function(self, card, context)
+		if context.blueprint then return end
+		if (context.first_hand_drawn or context.open_booster) and card.ability.loyalty_remaining >= 2 then
+            local eval = function() return G.hand and not G.RESET_JIGGLES end
+            juice_card_until(card, eval, true)
+        end
+		if context.end_of_round and context.main_eval and not context.repetition then
+			if card.ability.loyalty_remaining < 2 then
+			card.ability.loyalty_remaining = card.ability.loyalty_remaining + 1
+				return {
+				message = tostring(card.ability.loyalty_remaining)  ..  "/2",
+				}
+			end
+		end
+		if context.selling_self and card.ability.loyalty_remaining >= 2 then
+			if G.hand then
+				for i = 1, #G.hand.cards do
+					G.hand.cards[i]:set_edition({negative = true})
+				end
+			else
+				return {
+				message = "No Hand!",
+				}
+			end
+		end
+	end
 }
 
 SMODS.ConsumableType {
