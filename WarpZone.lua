@@ -1149,10 +1149,9 @@ SMODS.Joker {
     calculate = function(self, card, context)
     if context.individual and context.cardarea == G.play then
         if context.other_card == context.scoring_hand[#context.scoring_hand] then
-			card:juice_up()
 			return {
 				xchips = 2,
-				card = context.scoring_hand[#context.scoring_hand]
+				card = card
 				}
 			end
 		end
