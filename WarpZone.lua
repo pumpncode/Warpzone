@@ -564,10 +564,10 @@ SMODS.Joker {
 			elseif G.GAME.blind:get_type() == "Big" then
 				diff = 4
 			else
-				diff = 8
+				diff = 6
 			end
 			for i=1, diff do
-				local random = math.ceil(pseudorandom('chcard', 0.0000000000000000001, 4))
+				local random = math.ceil(pseudorandom('chcard', 0.0000000000000000001, 5))
 				if random == 1 then
 					local randomvalue = math.ceil(pseudorandom('chcard', 0.0000000000000000001, 10))
 					card.ability.chips = card.ability.chips + randomvalue
@@ -1149,6 +1149,7 @@ SMODS.Joker {
     calculate = function(self, card, context)
     if context.individual and context.cardarea == G.play then
         if context.other_card == context.scoring_hand[#context.scoring_hand] then
+			card:juice_up()
 			return {
 				xchips = 2,
 				card = context.scoring_hand[#context.scoring_hand]
