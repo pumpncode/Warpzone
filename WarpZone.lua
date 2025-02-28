@@ -23,6 +23,7 @@ SMODS.Atlas {
 SMODS.Atlas {key = "modicon", path = "wzicon.png", px = 32, py = 32}
 SMODS.Atlas({key = 'guestapp', path = 'guest.png', px = 71, py = 95})
 SMODS.Atlas({key = 'disco', path = 'disco.png', px = 71, py = 95})
+SMODS.Atlas({key = 'enhancers', path = 'enhancers.png', px = 71, py = 95})
 
 SMODS.Joker {
     key = "aluber",
@@ -42,6 +43,7 @@ SMODS.Joker {
     rarity = 2,
     config = {
         transform = 0,
+		fullblind = 0,
     },
     loc_vars = function(self, info_queue, card)
         if card.ability.transform == 0 then
@@ -74,6 +76,7 @@ SMODS.Joker {
         end
 
         if context.first_hand_drawn and card.ability.transform == 0 and not context.blueprint then
+			card.ability.fullblind = G.GAME.blind.chips
             local eval = function() return G.GAME.current_round.discards_used == 0 and not G.RESET_JIGGLES end
             juice_card_until(card, eval, true)
         end
@@ -91,21 +94,19 @@ SMODS.Joker {
                 }
             end
         end
-        
-        if context.before and card.ability.transform == 1 then
-            SMODS.calculate_effect({
-                message = "Tax",
-                colour = G.C.RED
-            }, card)
-        end
-
         if context.individual then
             if context.cardarea == G.play and card.ability.transform == 1 then
-                local taxedchips = (G.GAME.blind.chips * 0.992)
-                G.GAME.blind.chips = taxedchips
-                G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
-                G.HUD_blind:get_UIE_by_ID('HUD_blind_count').UIBox:recalculate()
-                --card:juice_up()
+                G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+                    G.GAME.blind.chips = math.floor(G.GAME.blind.chips - ( card.ability.fullblind * 0.008))
+                    G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
+                    
+                    local chips_UI = G.hand_text_area.blind_chips
+                    G.FUNCS.blind_chip_UI_scale(G.hand_text_area.blind_chips)
+                    G.HUD_blind:recalculate() 
+                    chips_UI:juice_up()
+					card:juice_up()
+                    if not silent then play_sound('chips2') end
+                    return true end }))
             end
         end
 
@@ -358,6 +359,7 @@ SMODS.Joker {
     config = {
         color = 0,
     },
+	pixel_size = { w = 60, h = 95},
     set_ability = function(self, card, initial, delay_sprites)
         card.ability.color = (pseudorandom('unocard') * 4)
     end,
@@ -464,45 +466,11 @@ SMODS.Joker {
 			return {
                 x_mult = 3.14,
                 colour = G.C.RED,
-				card = context.other_card
+				card = card
             }
 		end
 	end
 end
-}
-SMODS.Joker {
-    key = "ironclad",
-    name = "Ruby Key",
-    atlas = 'Wzone',
-    loc_txt = {
-        name = "Ruby Key",
-        text = {
-            "When bought, turns into a",
-			"random {C:attention}Ironclad consumable{}",
-			"{C:inactive}(can only be bought once, must have room){}"
-        }
-    },
-	no_pool_flag = 'ironclad_bought',
-    unlocked = true,
-    discovered = true,
-    eternal_compat = false,
-    perishable_compat = false,
-    blueprint_compat = false,
-    rarity = 2,
-    pos = { x = 2, y = 2 },
-    cost = 5,
-    add_to_deck = function(self, card, from_debuff)
-		play_sound('tarot1')
-		card:start_dissolve()
-		if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
-			G.GAME.pool_flags.ironclad_bought = true
-			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
-            local ironcladcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, nil)
-            ironcladcons:add_to_deck()
-            G.consumeables:emplace(ironcladcons)
-            G.GAME.consumeable_buffer = 0
-			end
-		end,
 }
 SMODS.Joker {
     key = "chcard",
@@ -517,6 +485,7 @@ SMODS.Joker {
             "{C:inactive}(Currently {C:chips}+#1#{C:inactive}/{C:mult}+#2#{C:inactive}/{X:mult,C:white}X#3#{C:inactive}){}"
         }
     },
+	pixel_size = { w = 60, h = 60},
     unlocked = true,
     discovered = true,
     eternal_compat = true,
@@ -1138,6 +1107,7 @@ SMODS.Joker {
 			"{X:chips,C:white}X2{} Chips when scored",
         }
     },
+	pixel_size = { w = 50, h = 93},
     unlocked = true,
     discovered = true,
     eternal_compat = true,
@@ -1186,7 +1156,7 @@ SMODS.Joker {
     blueprint_compat = false,
     rarity = 3,
     pos = { x = 0, y = 3 },
-    cost = 3,
+    cost = 6,
 	calculate = function(self, card, context)
 		if context.blueprint then return end
 		if (context.first_hand_drawn or context.open_booster) and card.ability.loyalty_remaining >= 2 then
@@ -1213,6 +1183,78 @@ SMODS.Joker {
 			end
 		end
 	end
+}
+SMODS.Joker {
+    key = "ironclad",
+    name = "Ruby Key",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Ruby Key",
+        text = {
+            "When bought, turns into a",
+			"random {C:attention}Ironclad consumable{}",
+			"{C:inactive}(can only be bought once, must have room){}"
+        }
+    },
+	pixel_size = { w = 52, h = 73},
+	no_pool_flag = 'ironclad_bought',
+    unlocked = true,
+    discovered = true,
+    eternal_compat = false,
+    perishable_compat = false,
+    blueprint_compat = false,
+    rarity = 2,
+    pos = { x = 2, y = 2 },
+    cost = 5,
+    add_to_deck = function(self, card, from_debuff)
+		play_sound('tarot1')
+		card:start_dissolve()
+		if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			G.GAME.pool_flags.ironclad_bought = true
+			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+			local cardlist = {'c_Wzon_fiendfire','c_Wzon_bloodletting','c_Wzon_armaments'}
+            local ironcladcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, pseudorandom_element(cardlist))
+            ironcladcons:add_to_deck()
+            G.consumeables:emplace(ironcladcons)
+            G.GAME.consumeable_buffer = 0
+			end
+		end,
+}
+SMODS.Joker {
+    key = "silent",
+    name = "Emerald Key",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Emerald Key",
+        text = {
+            "When bought, turns into a",
+			"random {C:attention}Silent consumable{}",
+			"{C:inactive}(can only be bought once, must have room){}"
+        }
+    },
+	pixel_size = { w = 52, h = 73},
+	no_pool_flag = 'silent_bought',
+    unlocked = true,
+    discovered = true,
+    eternal_compat = false,
+    perishable_compat = false,
+    blueprint_compat = false,
+    rarity = 2,
+    pos = { x = 1, y = 3 },
+    cost = 5,
+    add_to_deck = function(self, card, from_debuff)
+		play_sound('tarot1')
+		card:start_dissolve()
+		if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			G.GAME.pool_flags.silent_bought = true
+			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+			local cardlist = {'c_Wzon_distraction','c_Wzon_bouncingflask','c_Wzon_calculatedgamble'}
+            local silentcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, pseudorandom_element(cardlist))
+            silentcons:add_to_deck()
+            G.consumeables:emplace(silentcons)
+            G.GAME.consumeable_buffer = 0
+			end
+		end,
 }
 
 SMODS.ConsumableType {
@@ -1331,14 +1373,148 @@ use = function(self, card)
         return true end }))
 end
 }
+SMODS.Consumable{
+    set = 'GuestAppearance',
+	atlas = 'guestapp',
+    key = 'distraction',
+	loc_txt = {
+        name = "Distraction",
+        text = {
+            "{C:chips}+1{} hand this",
+			"round, creates a",
+			"random {C:attention}consumeable"
+        }
+    },
+	pos = { x = 3, y = 0 },
+	can_use = function(self, card)
+	if G.GAME.blind.in_blind then
+        return true
+	end
+end,    
+use = function(self, card)
+	ease_hands_played(1)
+	local randomcons = create_card('Consumeables', G.consumeables, nil, nil, nil, nil, nil)
+    randomcons:add_to_deck()
+    G.consumeables:emplace(randomcons)
+	G.GAME.consumeable_buffer = 0
+end
+}
+SMODS.Consumable{
+    set = 'GuestAppearance',
+	atlas = 'guestapp',
+    key = 'bouncingflask',
+	loc_txt = {
+        name = "Bouncing Flask",
+        text = {
+            "Enhances {C:attention}1{} random card into",
+			"a {C:attention}Poisonous Card 3{} times",
+			"{C:inactive}(can improve already Poisonous Cards)"
+        }
+    },
+	pos = { x = 4, y = 0 },
+	can_use = function(self, card)
+    if G.hand then
+		return true 
+	end
+end,    
+use = function(self, card)
+	local chosencard
+	for i = 1, 3 do
+		G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+		chosencard = pseudorandom_element(G.hand.cards)
+		chosencard:juice_up(0.3, 0.5)
+		if chosencard.config.center and chosencard.config.center == G.P_CENTERS.m_Wzon_poisonous then
+			if not chosencard.edition then
+				chosencard:set_edition("e_foil",true)
+			else
+				if not chosencard.seal then
+					chosencard:set_seal("Red",true)
+				else
+					chosencard.ability.perma_bonus = chosencard.ability.perma_bonus or 0
+					chosencard.ability.perma_bonus = chosencard.ability.perma_bonus + 20
+				end
+			end
+		else
+			chosencard:set_ability("m_Wzon_poisonous")
+		end
+		return true end }))
+	end
+end
+}
+SMODS.Consumable{
+    set = 'GuestAppearance',
+	atlas = 'guestapp',
+    key = 'calculatedgamble',
+	loc_txt = {
+        name = "Calculated Gamble",
+        text = {
+            "Gain {C:mult}+1{} discard",
+        }
+    },
+	pos = { x = 5, y = 0 },
+	can_use = function(self, card)
+        return true 
+end,    
+use = function(self, card)
+	G.GAME.round_resets.discards = G.GAME.round_resets.discards + 1
+	ease_discard(1)
+	play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
+end
+}
+
+local old_g_funcs_check_for_buy_space = G.FUNCS.check_for_buy_space --thank you More Fluff!
+G.FUNCS.check_for_buy_space = function(card)
+	if card.config.center_key == "j_Wzon_stack" then
+		return true
+	end
+	if card.config.center_key == "j_Wzon_ironclad" or card.config.center_key == "j_Wzon_silent" then
+		if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			return true
+		else
+			alert_no_space(card, G.consumeables)
+			return false
+		end
+	end
+	return old_g_funcs_check_for_buy_space(card)
+end
+
+SMODS.Enhancement{
+    key = "poisonous",
+    atlas = "enhancers",
+    pos = {x = 0, y = 0},
+    loc_txt={
+        name="Poisonous Card",
+        text = {
+            "Reduces Blind by",
+            "current number of",
+            "{C:chips}Chips{} when scored"
+        }
+    },
+	calculate = function(self,card,context)
+        if context.main_scoring and context.cardarea == G.play then
+			local chips_to_subtract = hand_chips
+			G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+                    G.GAME.blind.chips = G.GAME.blind.chips - chips_to_subtract
+                    G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
+                    
+                    local chips_UI = G.hand_text_area.blind_chips
+                    G.FUNCS.blind_chip_UI_scale(G.hand_text_area.blind_chips)
+                    G.HUD_blind:recalculate() 
+                    chips_UI:juice_up()
+					card:juice_up()
+                    if not silent then play_sound('chips2') end
+                    return true end }))
+		end
+	end
+}
 
 G.localization.descriptions.Other["masquerade_reminder"] = {
         name = "Masquerade the Blazing Dragon", --tooltip name
        text = {
            "{C:chips}+25{} Chips",
            "{C:mult}+20{} Mult",
-           "Reduces blind by 0.8%",
-		   "for every scoring card"
+           "Reduces full blind by",
+		   "{C:attention}0.8%{} for every scoring card"
        }
    }
 G.localization.descriptions.Other["discostats"] = {
