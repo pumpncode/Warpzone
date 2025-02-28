@@ -1468,9 +1468,7 @@ G.FUNCS.check_for_buy_space = function(card)
 		return true
 	end
 	if card.config.center_key == "j_Wzon_ironclad" or card.config.center_key == "j_Wzon_silent" then
-		if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
-			return true
-		else
+		if #G.consumeables.cards + G.GAME.consumeable_buffer >= G.consumeables.config.card_limit then
 			alert_no_space(card, G.consumeables)
 			return false
 		end
