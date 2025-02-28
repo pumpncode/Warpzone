@@ -1382,7 +1382,7 @@ SMODS.Consumable{
         text = {
             "{C:chips}+1{} hand this",
 			"round, creates a",
-			"random {C:attention}consumeable"
+			"random {C:attention}consumable"
         }
     },
 	pos = { x = 3, y = 0 },
@@ -1656,7 +1656,7 @@ G.localization.descriptions.Joker['painthreshold'] =  {
 G.localization.descriptions.Joker['physicalinstrument'] =  {
         name = 'Physical Instrument',
         text = {"Creates a {C:dark_edition}Negative{} copy of every",
-			"non-{C:dark_edition}Negative{} {C:attention}Consumable{} you use if",
+			"non-{C:dark_edition}Negative{} {C:attention}consumable{} you use if",
 			"Dice Score is {C:green}8 or more{}, {C:attention}rerolls{}",
 			"dice after every use"
 			},
@@ -1664,7 +1664,7 @@ G.localization.descriptions.Joker['physicalinstrument'] =  {
 G.localization.descriptions.Joker['electrochemistry'] =  {
         name = 'Electrochemistry',
         text = {"Gains {C:chips}Chips{} equal to {C:green}Dice Score{} when",
-			"you use a {C:attention}Consumable{}, swaps",
+			"you use a {C:attention}consumable{}, swaps",
 			"to \"{C:purple}Volition{}\" if you sell one"
 			},
     }
