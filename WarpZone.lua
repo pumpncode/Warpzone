@@ -1241,7 +1241,7 @@ SMODS.Joker {
     blueprint_compat = false,
     rarity = 2,
     pos = { x = 1, y = 3 },
-    cost = 5,
+    cost = 3,
     add_to_deck = function(self, card, from_debuff)
 		play_sound('tarot1')
 		card:start_dissolve()
