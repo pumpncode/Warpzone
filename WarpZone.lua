@@ -1411,6 +1411,9 @@ SMODS.Consumable{
 			"{C:inactive}(can improve already Poisonous Cards)"
         }
     },
+	loc_vars = function(self, info_queue, card)
+		info_queue[#info_queue+1] =  G.P_CENTERS.m_Wzon_poisonous
+	end,
 	pos = { x = 4, y = 0 },
 	can_use = function(self, card)
     if G.hand then
@@ -1484,7 +1487,7 @@ SMODS.Enhancement{
         name="Poisonous Card",
         text = {
             "Reduces Blind by",
-            "current number of",
+            "current amount of",
             "{C:chips}Chips{} when scored"
         }
     },
