@@ -1746,7 +1746,7 @@ SMODS.Sticker{
 	calculate = function(self,card,context)
         if (context.joker_main and card.ability.set == "Joker") or (context.main_scoring and context.cardarea == G.play and (card.ability.set == 'Enhanced' or card.ability.set == 'Default')) then
 			return {
-                chips_mod = 100,
+                chip_mod = 100,
 				colour = G.C.CHIPS,
                 message = localize { type = 'variable', key = 'a_chips', vars = { 100 } }
             }
