@@ -24,6 +24,7 @@ SMODS.Atlas {key = "modicon", path = "wzicon.png", px = 32, py = 32}
 SMODS.Atlas({key = 'guestapp', path = 'guest.png', px = 71, py = 95})
 SMODS.Atlas({key = 'disco', path = 'disco.png', px = 71, py = 95})
 SMODS.Atlas({key = 'enhancers', path = 'enhancers.png', px = 71, py = 95})
+SMODS.Atlas({key = 'stickers', path = 'stickers.png', px = 71, py = 95})
 
 SMODS.Joker {
     key = "aluber",
@@ -1089,7 +1090,6 @@ SMODS.Joker {
 			end
 		end
 		if context.destroying_card and context.destroying_card.destroy_me_pls then
-		print("test")
 			return {
 					remove = true
 				}
@@ -1135,7 +1135,7 @@ SMODS.Joker {
     loc_txt = {
         name = "Hollowness",
         text = {
-            "After {C:attention}2{} rounds, sell ",
+            "After {C:attention}2{} rounds, sell",
 			"this card to make all",
 			"cards in hand {C:dark_edition}Negative{}",
 			"{C:inactive}(Currently {C:attention}#1#{C:inactive}/2)"
@@ -1255,6 +1255,104 @@ SMODS.Joker {
             G.GAME.consumeable_buffer = 0
 			end
 		end,
+}
+SMODS.Joker {
+    key = "defect",
+    name = "Sapphire Key",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Sapphire Key",
+        text = {
+            "When bought, turns into a",
+			"random {C:attention}Defect consumable{}",
+			"{C:inactive}(can only be bought once, must have room){}"
+        }
+    },
+	pixel_size = { w = 52, h = 73},
+	no_pool_flag = 'defect_bought',
+    unlocked = true,
+    discovered = true,
+    eternal_compat = false,
+    perishable_compat = false,
+    blueprint_compat = false,
+    rarity = 2,
+    pos = { x = 3, y = 3 },
+    cost = 3,
+    add_to_deck = function(self, card, from_debuff)
+		play_sound('tarot1')
+		card:start_dissolve()
+		if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			G.GAME.pool_flags.defect_bought = true
+			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+			local cardlist = {'c_Wzon_zap','c_Wzon_coolheaded','c_Wzon_darkness'}
+            local silentcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, pseudorandom_element(cardlist))
+            silentcons:add_to_deck()
+            G.consumeables:emplace(silentcons)
+            G.GAME.consumeable_buffer = 0
+			end
+		end,
+}
+SMODS.Joker {
+    key = "exoticaceofspades",
+    name = "Exotic Ace of Spades",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Exotic Ace of Spades",
+        text = {
+            "Retrigger all played cards",
+			"with {C:spades}Spade{} suit",
+			"Defeating a blind grants {C:dark_edition}Foil{}",
+			"to your next {C:attention}#1#{} scoring cards",
+			"{C:inactive}(can currently foil {C:attention}#2#{C:inactive} cards)"
+        }
+		,boxes = {2,3}
+    },
+	config = {how_many = 6, bullets = 0
+	},
+	loc_vars = function(self, info_queue, card)
+		return {
+            vars = {card.ability.how_many, card.ability.bullets}
+        }
+	end,
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 2,
+    pos = { x = 2, y = 3 },
+    cost = 7,
+	calculate = function(self, card, context)
+		if context.cardarea == G.play and context.repetition and not context.repetition_only then
+			if card.ability.bullets > 0 and not context.other_card.edition and not context.blueprint then
+				card.ability.bullets = card.ability.bullets - 1
+				local __card = context.other_card
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.3,func = function()
+				card:juice_up()
+                __card:set_edition({foil = true})
+                return true end }))
+				SMODS.calculate_effect({
+						message = "Foil",
+						colour = G.C.CHIPS,
+						}, __card)
+			end
+			if context.other_card:is_suit("Spades") then
+				return {
+					message = 'Again!',
+					repetitions = 1,
+					card = card
+				}
+			end
+		end
+		if context.end_of_round and not context.blueprint and context.main_eval and not context.repetition then
+			card.ability.bullets = card.ability.bullets + card.ability.how_many
+			return {
+					message = 'Memento Mori',
+					colour = G.C.CHIPS,
+					card = card
+				}
+		end
+	end
 }
 
 SMODS.ConsumableType {
@@ -1464,6 +1562,103 @@ use = function(self, card)
 	play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
 end
 }
+SMODS.Consumable{
+    set = 'GuestAppearance',
+	atlas = 'guestapp',
+    key = 'zap',
+	loc_txt = {
+        name = "Zap",
+        text = {
+            "Channel {C:attention}Lightning{} on {C:attention}1{}",
+			"selected card or Joker"
+        }
+    },
+	loc_vars = function(self, info_queue, card)
+		info_queue[#info_queue+1] = {key = 'Wzon_lightning', set = 'Other'}
+	end,
+	pos = { x = 6, y = 0 },
+	can_use = function(self, card)
+        if ((G.hand and (G.hand.highlighted and #G.hand.highlighted == 1)) and not (G.jokers and (G.jokers.highlighted and #G.jokers.highlighted == 1))) or (not (G.hand and (G.hand.highlighted and #G.hand.highlighted == 1)) and (G.jokers and (G.jokers.highlighted and #G.jokers.highlighted == 1))) then
+        return true
+    end  
+end,    
+use = function(self, card)
+	if #G.hand.highlighted == 1 then
+		G.hand.highlighted[1]:juice_up()
+		G.hand.highlighted[1]:add_sticker("Wzon_lightning", true)
+		G.hand:unhighlight_all()
+	else
+		G.jokers.highlighted[1]:juice_up()
+		G.jokers.highlighted[1]:add_sticker("Wzon_lightning", true)
+		G.jokers:unhighlight_all()
+	end
+	play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
+end
+}
+SMODS.Consumable{
+    set = 'GuestAppearance',
+	atlas = 'guestapp',
+    key = 'coolheaded',
+	loc_txt = {
+        name = "Coolheaded",
+        text = {
+            "Channel {C:attention}Frost{} on {C:attention}1{}",
+			"selected card or Joker,",
+			"draw {C:attention}1{} card"
+        }
+    },
+	loc_vars = function(self, info_queue, card)
+		info_queue[#info_queue+1] = {key = 'Wzon_frost', set = 'Other'}
+	end,
+	pos = { x = 7, y = 0 },
+	can_use = function(self, card)
+        if ((G.hand and (G.hand.highlighted and #G.hand.highlighted == 1)) and not (G.jokers and (G.jokers.highlighted and #G.jokers.highlighted == 1))) or (not (G.hand and (G.hand.highlighted and #G.hand.highlighted == 1)) and (G.jokers and (G.jokers.highlighted and #G.jokers.highlighted == 1))) then
+        return true
+    end  
+end,    
+use = function(self, card)
+	if #G.hand.highlighted == 1 then
+		G.hand.highlighted[1]:juice_up()
+		G.hand.highlighted[1]:add_sticker("Wzon_frost", true)
+		G.hand:unhighlight_all()
+	else
+		G.jokers.highlighted[1]:juice_up()
+		G.jokers.highlighted[1]:add_sticker("Wzon_frost", true)
+		G.jokers:unhighlight_all()
+	end
+	play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
+	if G.GAME.blind.in_blind then
+		G.FUNCS.draw_from_deck_to_hand(1)
+	end
+end
+}
+SMODS.Consumable{
+    set = 'GuestAppearance',
+	atlas = 'guestapp',
+    key = 'darkness',
+	loc_txt = {
+        name = "Darkness",
+        text = {
+            "Channel {C:attention}Dark{} on",
+			"{C:attention}1{} selected Joker"
+        }
+    },
+	loc_vars = function(self, info_queue, card)
+		info_queue[#info_queue+1] = {key = 'Wzon_dark', set = 'Other'}
+	end,
+	pos = { x = 8, y = 0 },
+	can_use = function(self, card)
+        if G.jokers and (G.jokers.highlighted and #G.jokers.highlighted == 1) then
+        return true
+    end  
+end,    
+use = function(self, card)
+	G.jokers.highlighted[1]:juice_up()
+	G.jokers.highlighted[1]:add_sticker("Wzon_dark", true)
+	G.jokers:unhighlight_all()
+	play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
+end
+}
 
 local old_g_funcs_check_for_buy_space = G.FUNCS.check_for_buy_space --thank you More Fluff!
 G.FUNCS.check_for_buy_space = function(card)
@@ -1491,6 +1686,9 @@ SMODS.Enhancement{
             "{C:chips}Chips{} when scored"
         }
     },
+	in_pool = function(self)
+        return false
+    end,
 	calculate = function(self,card,context)
         if context.main_scoring and context.cardarea == G.play then
 			local chips_to_subtract = hand_chips
@@ -1505,6 +1703,91 @@ SMODS.Enhancement{
 					card:juice_up()
                     if not silent then play_sound('chips2') end
                     return true end }))
+		end
+	end
+}
+SMODS.Sticker{
+    key = "lightning",
+    atlas = "stickers",
+    pos = {x = 0, y = 0},
+    loc_txt={
+        name="Lightning",
+		label="Lightning",
+        text = {
+            "{X:mult,C:white}X2{} Mult"
+        }
+    },
+	default_compat = true,
+	rate = 0,
+	badge_colour = HEX("d0e029"),
+	calculate = function(self,card,context)
+        if (context.joker_main--[[post_joker]] and card.ability.set == "Joker") or (context.main_scoring and context.cardarea == G.play and (card.ability.set == 'Enhanced' or card.ability.set == 'Default')) then
+			return {
+                Xmult_mod = 2,
+                message = localize { type = 'variable', key = 'a_xmult', vars = { 2 } }
+            }
+		end
+	end
+}
+SMODS.Sticker{
+    key = "frost",
+    atlas = "stickers",
+    pos = {x = 1, y = 0},
+    loc_txt={
+        name="Frost",
+		label="Frost",
+        text = {
+            "{C:chips}+100{} Chips"
+        }
+    },
+	default_compat = true,
+	rate = 0,
+	badge_colour = HEX("8deff0"),
+	calculate = function(self,card,context)
+        if (context.joker_main and card.ability.set == "Joker") or (context.main_scoring and context.cardarea == G.play and (card.ability.set == 'Enhanced' or card.ability.set == 'Default')) then
+			return {
+                chips_mod = 100,
+				colour = G.C.CHIPS,
+                message = localize { type = 'variable', key = 'a_chips', vars = { 100 } }
+            }
+		end
+	end
+}
+SMODS.Sticker{
+    key = "dark",
+    atlas = "stickers",
+    pos = {x = 2, y = 0},
+    loc_txt={
+        name="Dark",
+		label="Dark",
+        text = {
+            "Sell the {C:attention}Joker{} this is applied",
+			"to after two rounds to",
+			"create a {C:dark_edition}Negative{} {C:attention}Joker{}",
+			"of the same {C:attention}rarity{}"
+        }
+    },
+	default_compat = true,
+	rate = 0,
+	badge_colour = HEX("b056df"),
+	calculate = function(self,card,context)
+		if context.before and not card.ability.darkorbturns then
+			card.ability.darkorbturns = 0
+		end
+        if context.end_of_round and context.main_eval and not context.repetition and card.ability.darkorbturns < 2 then
+			card.ability.darkorbturns = card.ability.darkorbturns + 1
+			return {
+				message = tostring(card.ability.darkorbturns)  ..  "/2",
+				}
+		elseif context.end_of_round and context.main_eval and card.ability.darkorbturns >= 2 then
+			return {
+				message = tostring(card.ability.darkorbturns)  ..  "/2",
+				}
+		end
+		if context.selling_self and card.ability.darkorbturns and card.ability.darkorbturns >= 2 then
+			local rarities = {"Common", "Uncommon", "Rare", "Legendary"}
+			local _rarity = rarities[card.config.center.rarity]
+			SMODS.add_card { set = 'Joker', rarity = _rarity, edition = "e_negative" }
 		end
 	end
 }
@@ -1539,7 +1822,7 @@ G.localization.descriptions.Joker['masquerade'] =  {
         name = 'Masquerade the Blazing Dragon',
         text = {"{C:chips}+25{} Chips", 
             "{C:mult}+20{} Mult",
-            "Reduces blind by 0.8%",
+            "Reduces full blind by 0.8%",
 			"for every scoring card"
 			},
     }	
