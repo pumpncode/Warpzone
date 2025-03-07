@@ -1673,6 +1673,17 @@ G.FUNCS.check_for_buy_space = function(card)
 	end
 	return old_g_funcs_check_for_buy_space(card)
 end
+G.FUNCS.can_select_card = function(e)
+  if card.config.center_key == "j_Wzon_stack" then 
+    e.config.colour = G.C.GREEN
+    e.config.button = 'use_card'
+  elseif card.config.center_key == "j_Wzon_ironclad" or card.config.center_key == "j_Wzon_silent" or card.config.center_key == "j_Wzon_defect" and #G.consumeables.cards + G.GAME.consumeable_buffer >= G.consumeables.config.card_limit then
+		e.config.colour = G.C.UI.BACKGROUND_INACTIVE
+		e.config.button = nil
+  else
+    old_g_funcs_can_select_card(e)
+  end
+end
 
 SMODS.Enhancement{
     key = "poisonous",
