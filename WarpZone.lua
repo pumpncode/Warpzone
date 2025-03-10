@@ -136,9 +136,9 @@ SMODS.Joker {
     loc_txt = {
         name = "Meat Boy",
         text = {
-            "{C:mult}+1{} Mult per hand played", 
+            "{C:mult}+#1#{} Mult per hand played", 
             "without beating the blind",
-            "{C:inactive}(currently {C:mult}+#1# {C:inactive}Mult){}"
+            "{C:inactive}(currently {C:mult}+#2# {C:inactive}Mult){}"
         }
     },
     unlocked = true,
@@ -148,11 +148,12 @@ SMODS.Joker {
     blueprint_compat = true,
     rarity = 1,
     config = {
+		increase = 1,
         mult = 0,
     },
     loc_vars = function(self, info_queue, card)
         return {
-            vars = {card.ability.mult}
+            vars = {card.ability.increase,card.ability.mult}
         }
     end,
     pos = { x = 2, y = 0 },
@@ -167,7 +168,7 @@ SMODS.Joker {
         
         if context.after and context.cardarea == G.jokers and not context.blueprint then
 		    if(G.GAME.chips + (hand_chips * mult) < G.GAME.blind.chips) then
-                card.ability.mult = card.ability.mult + 1
+                card.ability.mult = card.ability.mult + card.ability.increase
                 return {
                     message = "+" .. tostring(card.ability.mult) .. " Mult",
                     card = card
@@ -268,7 +269,7 @@ SMODS.Joker {
     loc_txt = {
         name = "War Without Reason",
         text = {
-            "Gains {X:mult,C:white}X0.1{} Mult every", 
+            "Gains {X:mult,C:white}X#3#{} Mult every", 
             "time played hand beats",
             "your {C:attention}best hand{}",
 			"{C:inactive}(Currently {X:mult,C:white}X#1#{}{C:inactive} Mult)",
@@ -284,10 +285,11 @@ SMODS.Joker {
     config = {
         xmult = 1,
 		score = 0,
+		increase = 0.2
     },
     loc_vars = function(self, info_queue, card)
         return {
-            vars = {card.ability.xmult,card.ability.score}
+            vars = {card.ability.xmult,card.ability.score,card.ability.increase}
         }
     end,
     pos = { x = 0, y = 1 },
@@ -302,7 +304,7 @@ SMODS.Joker {
         
         if context.after and context.cardarea == G.jokers and not context.blueprint then
 		    if hand_chips * mult > card.ability.score then
-                card.ability.xmult = card.ability.xmult + 0.1
+                card.ability.xmult = card.ability.xmult + card.ability.increase
 				card.ability.score = hand_chips * mult
                 return {
                     message = 'Upgrade!',
