@@ -167,7 +167,7 @@ SMODS.Joker {
         end
         
         if context.after and context.cardarea == G.jokers and not context.blueprint then
-		    if(G.GAME.chips + (hand_chips * mult) < G.GAME.blind.chips) then
+		    if(G.GAME.chips + (to_big(hand_chips) * to_big(mult)) < G.GAME.blind.chips) then
                 card.ability.mult = card.ability.mult + card.ability.increase
                 return {
                     message = "+" .. tostring(card.ability.mult) .. " Mult",
@@ -295,7 +295,7 @@ SMODS.Joker {
     pos = { x = 0, y = 1 },
     cost = 8,
     calculate = function(self, card, context)
-        if context.joker_main then
+        if context.joker_main and card.ability.xmult > 1 then
             return {
                 Xmult_mod = card.ability.xmult,
                 message = localize { type = 'variable', key = 'a_xmult', vars = { card.ability.xmult } }
@@ -303,9 +303,9 @@ SMODS.Joker {
         end
         
         if context.after and context.cardarea == G.jokers and not context.blueprint then
-		    if hand_chips * mult > card.ability.score then
-                card.ability.xmult = card.ability.xmult + card.ability.increase
-				card.ability.score = hand_chips * mult
+		    if to_big(hand_chips) * to_big(mult) > to_big(card.ability.score) then
+                card.ability.xmult = to_big(card.ability.xmult) + to_big(card.ability.increase)
+				card.ability.score = to_big(hand_chips) * to_big(mult)
                 return {
                     message = 'Upgrade!',
                     card = card
@@ -945,7 +945,7 @@ SMODS.Joker {
 			end
 		end
 		if context.after and context.cardarea == G.jokers then
-			if (G.GAME.chips + (hand_chips * mult) > G.GAME.blind.chips) and card.ability.skill.type == 1 and card.ability.skill.attribute == 1 then
+			if (G.GAME.chips + (to_big(hand_chips) * to_big(mult)) > G.GAME.blind.chips) and card.ability.skill.type == 1 and card.ability.skill.attribute == 1 then
 				card.ability.extra.mult = card.ability.extra.mult + card.ability.dice.die1 + card.ability.dice.die2 + card.ability.dice.bonus
 				SMODS.calculate_effect({
 						message = "Upgrade", 
@@ -999,7 +999,7 @@ SMODS.Joker {
 		if context.hand_drawn and card.ability.switch == 1 then
 			card.ability.switch = 0
 			if hand_chips then
-				if hand_chips * mult < G.GAME.blind.chips/5 and not (card.ability.skill.type == 6 and card.ability.skill.attribute == 3)then
+				if to_big(hand_chips) * to_big(mult) < G.GAME.blind.chips/5 and not (card.ability.skill.type == 6 and card.ability.skill.attribute == 3)then
 					card.ability.skill.type = 6
 					card.ability.skill.attribute = 3
 				else
@@ -1687,6 +1687,9 @@ G.FUNCS.can_select_card = function(e)
     old_g_funcs_can_select_card(e)
   end
 end
+to_big = to_big or function(value)
+  return value
+end
 
 SMODS.Enhancement{
     key = "poisonous",
@@ -1705,7 +1708,7 @@ SMODS.Enhancement{
     end,
 	calculate = function(self,card,context)
         if context.main_scoring and context.cardarea == G.play then
-			local chips_to_subtract = hand_chips
+			local chips_to_subtract = to_big(hand_chips)
 			G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
                     G.GAME.blind.chips = G.GAME.blind.chips - chips_to_subtract
                     G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
