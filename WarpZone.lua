@@ -295,7 +295,7 @@ SMODS.Joker {
     pos = { x = 0, y = 1 },
     cost = 8,
     calculate = function(self, card, context)
-        if context.joker_main and card.ability.xmult > 1 then
+        if context.joker_main and to_big(card.ability.xmult) > to_big(1) then
             return {
                 Xmult_mod = card.ability.xmult,
                 message = localize { type = 'variable', key = 'a_xmult', vars = { card.ability.xmult } }
