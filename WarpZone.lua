@@ -1229,6 +1229,19 @@ SMODS.Joker {
             G.GAME.consumeable_buffer = 0
 			end
 		end,
+	calculate = function(self, card, context)
+		if context.hand_drawn and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			play_sound('tarot1')
+			card:start_dissolve()
+			G.GAME.pool_flags.ironclad_bought = true
+			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+			local cardlist = {'c_Wzon_fiendfire','c_Wzon_bloodletting','c_Wzon_armaments'}
+            local ironcladcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, pseudorandom_element(cardlist))
+            ironcladcons:add_to_deck()
+            G.consumeables:emplace(ironcladcons)
+            G.GAME.consumeable_buffer = 0
+			end
+		end,
 }
 SMODS.Joker {
     key = "silent",
@@ -1256,6 +1269,19 @@ SMODS.Joker {
 		play_sound('tarot1')
 		card:start_dissolve()
 		if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			G.GAME.pool_flags.silent_bought = true
+			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+			local cardlist = {'c_Wzon_distraction','c_Wzon_bouncingflask','c_Wzon_calculatedgamble'}
+            local silentcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, pseudorandom_element(cardlist))
+            silentcons:add_to_deck()
+            G.consumeables:emplace(silentcons)
+            G.GAME.consumeable_buffer = 0
+			end
+		end,
+	calculate = function(self, card, context)
+		if context.hand_drawn and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			play_sound('tarot1')
+			card:start_dissolve()
 			G.GAME.pool_flags.silent_bought = true
 			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
 			local cardlist = {'c_Wzon_distraction','c_Wzon_bouncingflask','c_Wzon_calculatedgamble'}
@@ -1295,9 +1321,22 @@ SMODS.Joker {
 			G.GAME.pool_flags.defect_bought = true
 			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
 			local cardlist = {'c_Wzon_zap','c_Wzon_coolheaded','c_Wzon_darkness'}
-            local silentcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, pseudorandom_element(cardlist))
-            silentcons:add_to_deck()
-            G.consumeables:emplace(silentcons)
+            local defectcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, pseudorandom_element(cardlist))
+            defectcons:add_to_deck()
+            G.consumeables:emplace(defectcons)
+            G.GAME.consumeable_buffer = 0
+			end
+		end,
+	calculate = function(self, card, context)
+		if context.hand_drawn and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			play_sound('tarot1')
+			card:start_dissolve()
+			G.GAME.pool_flags.defect_bought = true
+			G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+			local cardlist = {'c_Wzon_zap','c_Wzon_coolheaded','c_Wzon_darkness'}
+            local defectcons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, pseudorandom_element(cardlist))
+            defectcons:add_to_deck()
+            G.consumeables:emplace(defectcons)
             G.GAME.consumeable_buffer = 0
 			end
 		end,
@@ -1546,7 +1585,7 @@ use = function(self, card)
 				end
 			end
 		else
-			chosencard:set_ability("m_Wzon_poisonous")
+			chosencard:set_ability(G.P_CENTERS.m_Wzon_poisonous, nil, true)--("m_Wzon_poisonous")
 		end
 		return true end }))
 	end
