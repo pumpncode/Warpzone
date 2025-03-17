@@ -352,8 +352,8 @@ SMODS.Joker {
     loc_txt = {
         name = "One Card",
         text = {
-            "If {C:attention}final hand{} of round is",
-            "a {C:attention}High Card{}, destroy all",
+            "If {C:attention}winning hand{} is a",
+            "{C:attention}High Card{}, destroy all",
             "unplayed cards in hand"
         }
     },
@@ -385,10 +385,12 @@ SMODS.Joker {
     end,
     calculate = function(self, card, context)
 		if context.blueprint then return end
-        if context.cardarea == G.hand and G.GAME.current_round.hands_left == 0 and context.scoring_name == "High Card" then
-            for i = 1, #G.hand.cards do
+        if context.after and context.scoring_name == "High Card" and to_big(hand_chips) * to_big(mult) >= to_big(G.GAME.blind.chips) then
+		G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+			for i = 1, #G.hand.cards do
                 G.hand.cards[i]:start_dissolve()
             end
+        return true end }))
         end
     end
 }
