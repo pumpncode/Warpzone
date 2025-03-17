@@ -1680,7 +1680,7 @@ G.FUNCS.can_select_card = function(e)
   if e.config.ref_table.config.center_key == "j_Wzon_stack" then 
     e.config.colour = G.C.GREEN
     e.config.button = 'use_card'
-  elseif e.config.ref_table.config.center_key == "j_Wzon_ironclad" or e.config.ref_table.config.center_key == "j_Wzon_silent" or e.config.ref_table.config.center_key == "j_Wzon_defect" and #G.consumeables.cards + G.GAME.consumeable_buffer >= G.consumeables.config.card_limit then
+  elseif (e.config.ref_table.config.center_key == "j_Wzon_ironclad" or e.config.ref_table.config.center_key == "j_Wzon_silent" or e.config.ref_table.config.center_key == "j_Wzon_defect") and #G.consumeables.cards + G.GAME.consumeable_buffer >= G.consumeables.config.card_limit then
 		e.config.colour = G.C.UI.BACKGROUND_INACTIVE
 		e.config.button = nil
   else
