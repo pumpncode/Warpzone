@@ -1227,10 +1227,15 @@ SMODS.Joker {
             ironcladcons:add_to_deck()
             G.consumeables:emplace(ironcladcons)
             G.GAME.consumeable_buffer = 0
+			if G.GAME.pool_flags.ironclad_bought and G.GAME.pool_flags.silent_bought and G.GAME.pool_flags.defect_bought and not next(SMODS.find_card('j_Wzon_corruptheart')) then
+				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
+				heart:add_to_deck()
+				G.jokers:emplace(heart)
+			end
 			end
 		end,
 	calculate = function(self, card, context)
-		if context.hand_drawn and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+		if context.hand_drawn and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and not context.blueprint then
 			play_sound('tarot1')
 			card:start_dissolve()
 			G.GAME.pool_flags.ironclad_bought = true
@@ -1240,6 +1245,11 @@ SMODS.Joker {
             ironcladcons:add_to_deck()
             G.consumeables:emplace(ironcladcons)
             G.GAME.consumeable_buffer = 0
+			if G.GAME.pool_flags.ironclad_bought and G.GAME.pool_flags.silent_bought and G.GAME.pool_flags.defect_bought and not next(SMODS.find_card('j_Wzon_corruptheart')) then
+				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
+				heart:add_to_deck()
+				G.jokers:emplace(heart)
+			end
 			end
 		end,
 }
@@ -1276,10 +1286,15 @@ SMODS.Joker {
             silentcons:add_to_deck()
             G.consumeables:emplace(silentcons)
             G.GAME.consumeable_buffer = 0
+			if G.GAME.pool_flags.ironclad_bought and G.GAME.pool_flags.silent_bought and G.GAME.pool_flags.defect_bought and not next(SMODS.find_card('j_Wzon_corruptheart')) then
+				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
+				heart:add_to_deck()
+				G.jokers:emplace(heart)
+			end
 			end
 		end,
 	calculate = function(self, card, context)
-		if context.hand_drawn and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+		if context.hand_drawn and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and not context.blueprint then
 			play_sound('tarot1')
 			card:start_dissolve()
 			G.GAME.pool_flags.silent_bought = true
@@ -1289,6 +1304,11 @@ SMODS.Joker {
             silentcons:add_to_deck()
             G.consumeables:emplace(silentcons)
             G.GAME.consumeable_buffer = 0
+			if G.GAME.pool_flags.ironclad_bought and G.GAME.pool_flags.silent_bought and G.GAME.pool_flags.defect_bought and not next(SMODS.find_card('j_Wzon_corruptheart')) then
+				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
+				heart:add_to_deck()
+				G.jokers:emplace(heart)
+			end
 			end
 		end,
 }
@@ -1325,10 +1345,15 @@ SMODS.Joker {
             defectcons:add_to_deck()
             G.consumeables:emplace(defectcons)
             G.GAME.consumeable_buffer = 0
+			if G.GAME.pool_flags.ironclad_bought and G.GAME.pool_flags.silent_bought and G.GAME.pool_flags.defect_bought and not next(SMODS.find_card('j_Wzon_corruptheart')) then
+				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
+				heart:add_to_deck()
+				G.jokers:emplace(heart)
+			end
 			end
 		end,
 	calculate = function(self, card, context)
-		if context.hand_drawn and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+		if context.hand_drawn and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and not context.blueprint then
 			play_sound('tarot1')
 			card:start_dissolve()
 			G.GAME.pool_flags.defect_bought = true
@@ -1338,6 +1363,11 @@ SMODS.Joker {
             defectcons:add_to_deck()
             G.consumeables:emplace(defectcons)
             G.GAME.consumeable_buffer = 0
+			if G.GAME.pool_flags.ironclad_bought and G.GAME.pool_flags.silent_bought and G.GAME.pool_flags.defect_bought and not next(SMODS.find_card('j_Wzon_corruptheart')) then
+				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
+				heart:add_to_deck()
+				G.jokers:emplace(heart)
+			end
 			end
 		end,
 }
@@ -1402,6 +1432,41 @@ SMODS.Joker {
 				}
 		end
 	end
+}
+SMODS.Joker {
+    key = "corruptheart",
+    name = "Corrupt Heart",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Corrupt Heart",
+        text = {
+            "Create a {C:red}Guest{} consumable",
+			"when {C:attention}Blind{} is selected",
+			"{C:inactive}(must have room){}"
+        }
+    },
+	yes_pool_flag = 'ironclad_bought' and 'silent_bought' and 'defect_bought',
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 3,
+    pos = { x = 4, y = 3 },
+    cost = 8,
+	calculate = function(self, card, context)
+		if context.setting_blind then
+			local cons = create_card('GuestAppearance', G.consumeables, nil, nil, nil, nil, nil)
+            cons:add_to_deck()
+            G.consumeables:emplace(cons)
+            G.GAME.consumeable_buffer = 0
+			return {
+                    message = "+1 Guest",
+                    delay = 0.45,
+                    card = card
+                }
+		end
+	end,
 }
 
 SMODS.ConsumableType {
