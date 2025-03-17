@@ -68,12 +68,12 @@ SMODS.Joker {
                 message = localize { type = 'variable', key = 'a_chips', vars = {25}},
                 chip_mod = 25,
                 colour = G.C.CHIPS
-            }, card)
+            }, context.blueprint_card or card)
             SMODS.calculate_effect({
                 message = localize { type = 'variable', key = 'a_mult', vars = {20}},
                 mult_mod = 20, 
                 colour = G.C.MULT
-            }, card)
+            }, context.blueprint_card or card)
         end
 
         if context.first_hand_drawn and card.ability.transform == 0 and not context.blueprint then
@@ -97,6 +97,12 @@ SMODS.Joker {
         end
         if context.individual then
             if context.cardarea == G.play and card.ability.transform == 1 then
+			local to_juice
+				if context.blueprint then
+					to_juice = context.blueprint_card
+				else
+					to_juice = card
+				end
                 G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
                     G.GAME.blind.chips = math.floor(G.GAME.blind.chips - ( card.ability.fullblind * 0.008))
                     G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
@@ -105,7 +111,7 @@ SMODS.Joker {
                     G.FUNCS.blind_chip_UI_scale(G.hand_text_area.blind_chips)
                     G.HUD_blind:recalculate() 
                     chips_UI:juice_up()
-					card:juice_up()
+					to_juice:juice_up()
                     if not silent then play_sound('chips2') end
                     return true end }))
             end
