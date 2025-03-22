@@ -25,6 +25,8 @@ SMODS.Atlas({key = 'guestapp', path = 'guest.png', px = 71, py = 95})
 SMODS.Atlas({key = 'disco', path = 'disco.png', px = 71, py = 95})
 SMODS.Atlas({key = 'enhancers', path = 'enhancers.png', px = 71, py = 95})
 SMODS.Atlas({key = 'stickers', path = 'stickers.png', px = 71, py = 95})
+SMODS.Atlas({key = 'forbidden', path = 'forbidden.png', px = 71, py = 95})
+SMODS.Atlas({key = 'jimbosuit', path = 'jimbosuit.png', px = 18, py = 18})
 
 SMODS.Joker {
     key = "aluber",
@@ -1095,9 +1097,6 @@ SMODS.Joker {
 			update_hand_text({sound = 'button', volume = 0.7, pitch = 1.1, delay = 0}, {mult = 0, chips = 0, handname = '', level = ''})
             card.ability.switch = 1
 			end
-			if context.destroying_card then
-				print(context.destroying_card.destroy_me_pls)
-			end
 		end
 		if context.destroying_card and context.destroying_card.destroy_me_pls then
 			return {
@@ -1467,6 +1466,167 @@ SMODS.Joker {
                 }
 		end
 	end,
+}
+SMODS.Joker {
+    key = "jimbo_forbidden",
+    name = "Jimbo the Forbidden One",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Jimbo the Forbidden One",
+        text = {
+            "{C:attention}Splits{} into {C:attention}5{} {C:attention}Forbidden{} cards added to",
+			"your {C:attention}deck{} when first hand is drawn",
+			"{C:red}Destroys itself{} if {C:attention}copied{} or your",
+			"{C:attention}full deck{} is not between",
+			"{C:attention}40{} and {C:attention}60{} cards"
+        }
+		,boxes = {2,3}
+    },
+	config = {
+        transform = 0,
+		illegal = false,
+    },
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = false,
+    blueprint_compat = false,
+    rarity = 3,
+    pos = { x = 0, y = 4 },
+    cost = 5,
+	add_to_deck = function(self, card, from_debuff)
+		for i = 1, #G.jokers.cards do
+			if G.jokers.cards[i].config.center.key == "j_Wzon_jimbo_forbidden" and G.jokers.cards[i] ~= card then
+				SMODS.calculate_effect({
+					message = "Illegal",
+					card = card,
+				}, card)
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.2,func = function()
+				card:start_dissolve()
+				return true end }))
+			end
+		end
+	end,
+	remove_from_deck = function(self, card, from_debuff)
+		for i = 1, #G.deck.cards do
+				if G.deck.cards[i]:is_suit("Wzon_Joker") or G.deck.cards[i].base.value == 'Wzon_Forbidden' then
+					draw_card(G.deck, G.hand, nil, nil, nil, G.deck.cards[i])
+				end
+			end
+			for i = 1, #G.discard.cards do
+				if G.discard.cards[i]:is_suit("Wzon_Joker") or G.discard.cards[i].base.value == 'Wzon_Forbidden' then
+					draw_card(G.discard, G.hand, nil, nil, nil, G.discard.cards[i])
+				end
+			end
+			G.E_MANAGER:add_event(Event({trigger = 'after',delay = 2,func = function()
+			for i = 1, #G.hand.cards do
+				if G.hand.cards[i]:is_suit("Wzon_Joker") or G.hand.cards[i].base.value == 'Wzon_Forbidden' then
+					G.hand.cards[i]:start_dissolve()
+				end
+			end
+			return true end }))
+		end,
+	calculate = function(self, card, context)
+		if context.blueprint then return end
+		if context.first_hand_drawn then
+			play_sound("card1")
+			card:flip()
+			local _lleg
+			local _rleg
+			local _larm
+			local _rarm
+			local _head
+			local _cards = {}
+			for i = 1, #G.hand.cards do
+				draw_card(G.hand, G.deck, nil, nil, nil, G.hand.cards[i])
+			end
+			G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.5,func = function()
+				_lleg = create_playing_card({front = G.P_CARDS["H"..'_'.."Wzon_Fo"], center = nil}, G.hand)
+				_lleg.ability.perma_x_mult = 3
+				_larm = create_playing_card({front = G.P_CARDS["S"..'_'.."Wzon_Fo"], center = nil}, G.hand)
+				_larm.ability.perma_bonus = 80
+				_head = create_playing_card({front = G.P_CARDS["Wzon_J"..'_'.."Wzon_Fo"], center = nil}, G.hand)
+				_head.ability.perma_h_dollars = 8
+				_rarm = create_playing_card({front = G.P_CARDS["D"..'_'.."Wzon_Fo"], center = nil}, G.hand)
+				_rarm.ability.perma_p_dollars = 5
+				_rleg = create_playing_card({front = G.P_CARDS["C"..'_'.."Wzon_Fo"], center = nil}, G.hand)
+				_rleg.ability.perma_mult = 25
+			return true end }))
+			G.E_MANAGER:add_event(Event({trigger = 'before',delay = 2,func = function()
+			for i = 1, #G.hand.cards do
+				if G.hand.cards[i].base.value == 'Wzon_Forbidden' then
+					table.insert(_cards, G.hand.cards[i])
+				end
+			end
+			card.ability.transform = 1
+			play_sound("card1")
+			card:flip()
+			SMODS.calculate_effect({
+                message = "Split",
+				card = card,
+				playing_cards_created = _cards
+            }, card)
+				for i = 1, #G.hand.cards do
+					draw_card(G.hand, G.deck, nil, nil, nil, G.hand.cards[i])
+				end
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 1,func = function()
+					G.deck:shuffle()
+					for i = 1, (G.hand.config.card_limit - 3) do
+						draw_card(G.deck, G.hand, nil, nil, nil, G.deck[1])
+					end
+				return true end }))
+            return true end }))
+		end
+		if context.after and context.scoring_name == "Wzon_Obliterate" and next(SMODS.find_mod('Talisman')) then
+			G.E_MANAGER:add_event(Event({trigger = 'after',delay = 1,func = function()
+			for i = 1, #G.hand.cards do
+				draw_card(G.hand, G.deck, nil, nil, nil, G.hand.cards[i])
+			end
+			G.GAME.chips = G.GAME.blind.chips
+			return true end }))
+		end
+		if context.end_of_round and context.cardarea == G.jokers then
+			play_sound("card1")
+			card:flip()
+			for i = 1, #G.deck.cards do
+				if G.deck.cards[i]:is_suit("Wzon_Joker") or G.deck.cards[i].base.value == 'Wzon_Forbidden' then
+					draw_card(G.deck, G.hand, nil, nil, nil, G.deck.cards[i])
+				end
+			end
+			for i = 1, #G.discard.cards do
+				if G.discard.cards[i]:is_suit("Wzon_Joker") or G.discard.cards[i].base.value == 'Wzon_Forbidden' then
+					draw_card(G.discard, G.hand, nil, nil, nil, G.discard.cards[i])
+				end
+			end
+			G.E_MANAGER:add_event(Event({trigger = 'after',delay = 2,func = function()
+			for i = 1, #G.hand.cards do
+				if G.hand.cards[i]:is_suit("Wzon_Joker") or G.hand.cards[i].base.value == 'Wzon_Forbidden' then
+					G.hand.cards[i]:start_dissolve()
+				end
+			end
+			card.ability.transform = 0
+			play_sound("card1")
+			card:flip()
+			return true end }))
+		end
+		if (#G.playing_cards < 40 or #G.playing_cards > 60) and card.ability.illegal == false then
+			card.ability.illegal = true
+			SMODS.calculate_effect({
+                message = "Illegal",
+				card = card,
+            }, card)
+			G.E_MANAGER:add_event(Event({trigger = 'after',delay = 1,func = function()
+				card:start_dissolve()
+			return true end }))
+		end
+	end,
+	update = function(self, card)
+        if card.ability.transform == 1 then
+            card.children.center:set_sprite_pos({x=1, y=4})
+        else
+            card.children.center:set_sprite_pos({x=0, y=4})
+        end
+    end
 }
 
 SMODS.ConsumableType {
@@ -1921,6 +2081,160 @@ SMODS.Sticker{
 	end
 }
 
+SMODS.Rank {
+	hc_atlas = 'forbidden',
+    lc_atlas = 'forbidden',
+
+	
+	hidden = true,
+	
+    key = 'Forbidden', -- the number or name (ex. "Jack") of your rank if it has one
+    card_key = 'Fo', -- the short key put after the suit when coding a card object (ex. for the card "H_5" the card_key is 5). this seems to usually match the shorthand
+    pos = { x = 0 }, -- x position on the card atlas
+    nominal = 0,  -- the number of chips this card scores
+    next = { 'Wzon_Forbidden' }, -- the next rank directly above it, used for Strength Tarot
+    shorthand = 'Fo', -- used for deck preview
+	
+	in_pool = function(self, args)
+		return false
+	end, 	
+	loc_txt = {name = "Forbidden",}
+}
+SMODS.Suit {
+    key = 'Joker',
+    card_key = 'J',
+
+    hc_atlas = 'forbidden',
+    lc_atlas = 'forbidden',
+
+    lc_ui_atlas = 'jimbosuit',
+    hc_ui_atlas = 'jimbosuit',
+
+    pos = {x = 0,y = 4},
+    ui_pos = {x = 0,y = 0},
+
+    lc_colour = HEX('FFBF01'),
+    hc_colour = HEX('FFBF01'),
+
+    loc_txt = {
+        singular = 'Jimbo',
+        plural = 'Jimbo'
+    },
+	in_pool = function(self, args)
+		return false
+	end,
+}
+
+SMODS.PokerHandPart{ -- Spectrum base (Referenced from SixSuits, only used for Obliterate calculations)
+    key = 'spectrum',
+    func = function(hand)
+        local suits = {}
+
+        -- determine suits to be used
+        for _, v in ipairs(SMODS.Suit.obj_buffer) do
+            suits[v] = 1
+        end
+        -- < 5 hand cant be a spectrum
+        if #hand < 5 then return {} end
+
+        local nonwilds = {}
+        for i = 1, #hand do
+            local cardsuits = {}
+            for _, v in ipairs(SMODS.Suit.obj_buffer) do
+                -- determine table of suits for each card (for future faster calculations)
+                if hand[i]:is_suit(v, nil, true) then
+                    table.insert(cardsuits, v)
+                end
+            end
+
+            -- if somehow no suits: spectrum is impossible
+            if #cardsuits == 0 then
+                return {}
+            -- if only 1 suit: can be handled immediately
+            elseif #cardsuits == 1 then
+                -- if suit is already present, not a spectrum, otherwise remove suit from "already used suits"
+                if suits[cardsuits[1]] == 0 then return {} end
+                suits[cardsuits[1]] = 0
+            -- add all cards with 2-4 suits to a table to be looked at
+            elseif #cardsuits < 5 then
+                table.insert(nonwilds, cardsuits)
+            end
+        end
+
+        -- recursive function for iterating over combinations
+        local isSpectrum 
+        isSpectrum = function(i, remaining)
+            -- traversed all the cards, found spectrum
+            if i == #nonwilds + 1 then
+                return true
+            end
+
+            -- copy remaining suits
+            local newremaining = {}
+            for k, v in pairs(remaining) do
+                newremaining[k] = v
+            end
+
+            -- for every suit of the current card: 
+            for _, suit in ipairs(nonwilds[i]) do
+                -- do nothing if suit has already been used
+                if remaining[suit] == 1 then
+                    -- use up suit on this card and check next card
+                    newremaining[suit] = 0
+                    if isSpectrum(i + 1, newremaining) then
+                        return true
+                    end
+                    -- reset suit before continuing
+                    newremaining[suit] = 1
+                end
+            end
+
+            return false
+        end
+
+        -- begin iteration from first (not already considered) card
+        if isSpectrum(1, suits) then
+            return {hand}
+        else
+            return {}
+        end
+    end
+}
+
+SMODS.PokerHand {
+    key = 'Obliterate',
+    chips = 1e309,
+    mult = 1e309,
+    l_chips = 1e309,
+    l_mult = 1e309,
+	visible = false,
+    example = {
+        { 'H_Wzon_Fo', true },
+        { 'S_Wzon_Fo', true },
+        { 'Wzon_J_Wzon_Fo', true },
+        { 'D_Wzon_Fo', true },
+        { 'C_Wzon_Fo', true },
+    },
+    loc_txt = {
+        ['en-us'] = {
+            name = 'Obliterate!',
+            description = {
+                '5 Forbidden cards with',
+                'different ranks',
+            }
+        }
+    },
+    evaluate = function(parts, hand)
+        if not next(parts._5) and not next(parts.Wzon_spectrum) then return {} end
+        local isforbid = true
+        for j = 1, #hand do 
+			local rank = SMODS.Ranks[hand[j].base.value]
+            isforbid = isforbid and rank.key == 'Wzon_Forbidden'
+        end
+        if isforbid then return {hand} end
+    end
+}
+
 G.localization.descriptions.Other["masquerade_reminder"] = {
         name = "Masquerade the Blazing Dragon", --tooltip name
        text = {
@@ -2139,3 +2453,33 @@ G.localization.descriptions.Joker['composure'] =  {
 			"your {C:attention}most played poker{} hand"
 			},
     }
+
+SMODS.current_mod.extra_tabs = function()
+    return {
+        {
+            label = 'Credits',
+            tab_definition_function = function()
+                return {
+                    n = G.UIT.ROOT,
+                    config = {
+                        r = 0.1, minw = 10, minh = 6, align = "tm", padding = 0.2, colour = G.C.BLACK
+                    },
+                    nodes = {
+                        {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Warp Zone", colour = G.C.Grey, scale = 1}}}},
+                        {n = G.UIT.R, config = {align = "tm", minh = .2}},
+                        {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "_Freh", colour = G.C.RED, scale = .7}}}},
+                        {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Developer", colour = G.C.WHITE, scale = .3}}}},
+                        {n = G.UIT.R, config = {align = "tm"}, nodes = {
+                            {n = G.UIT.C, config = {minw = 3, align = "tm", padding = 0.1}, nodes = {
+                                {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "u/r2d2upgrade", colour = G.C.YELLOW, scale = .5}}}},
+                                {n = G.UIT.R, config = {align = "tm", padding = 0.05}, nodes = {
+                                    {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Artist of Jimbo the Forbidden One", colour = G.C.WHITE, scale = .3}}}},
+                                }},
+                            }},
+                        }},
+                    }
+                }
+            end
+        },
+    }
+end
