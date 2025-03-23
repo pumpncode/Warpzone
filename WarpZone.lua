@@ -1666,9 +1666,9 @@ SMODS.Joker {
     eternal_compat = true,
     perishable_compat = true,
     blueprint_compat = true,
-    rarity = 1,
+    rarity = 2,
     pos = { x = 2, y = 4 },
-    cost = 3,
+    cost = 4,
     calculate = function(self, card, context)
 		if context.cardarea == G.jokers and context.final_scoring_step then
 			if to_big(hand_chips)*to_big(mult) > to_big(G.GAME.blind.chips) and pseudorandom('lobotomy') < G.GAME.probabilities.normal / card.ability.lobotomyodds then
