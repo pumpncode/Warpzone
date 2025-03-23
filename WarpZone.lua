@@ -47,18 +47,21 @@ SMODS.Joker {
     config = {
         transform = 0,
 		fullblind = 0,
+		extra = { 
+            chips = 25,
+            mult = 20
+        },
     },
     loc_vars = function(self, info_queue, card)
         if card.ability.transform == 0 then
-            info_queue[#info_queue+1] = { set = 'Other', key = 'masquerade_reminder' }
+            info_queue[#info_queue+1] = { set = 'Other', key = 'masquerade_reminder', specific_vars = {card.ability.extra.chips,card.ability.extra.mult} }
             return {
-                vars = {card.ability.transform},
                 key = 'aluberbase', set = 'Joker'
             }
         else
             return {
-                vars = {card.ability.transform},
-                key = 'masquerade', set = 'Joker'
+                vars = {card.ability.extra.chips,card.ability.extra.mult},
+                key = 'masquerade', set = 'Joker',
             }
         end
     end,
@@ -67,13 +70,13 @@ SMODS.Joker {
     calculate = function(self, card, context)
         if context.joker_main and card.ability.transform == 1 then
             SMODS.calculate_effect({
-                message = localize { type = 'variable', key = 'a_chips', vars = {25}},
-                chip_mod = 25,
+                message = localize { type = 'variable', key = 'a_chips', vars = {card.ability.extra.chips}},
+                chip_mod = card.ability.extra.chips,
                 colour = G.C.CHIPS
             }, context.blueprint_card or card)
             SMODS.calculate_effect({
-                message = localize { type = 'variable', key = 'a_mult', vars = {20}},
-                mult_mod = 20, 
+                message = localize { type = 'variable', key = 'a_mult', vars = {card.ability.extra.mult}},
+                mult_mod = card.ability.extra.mult, 
                 colour = G.C.MULT
             }, context.blueprint_card or card)
         end
@@ -193,7 +196,7 @@ SMODS.Joker {
         name = "Big Scary Demon",
         text = {
             "You cannot die", 
-            "{C:green}#1# in 2{} chance to",
+            "{C:green}#1# in #2#{} chance to",
             "turn into a turtle",
 			"at end of round"
         }
@@ -206,15 +209,16 @@ SMODS.Joker {
     rarity = 2,
     config = {
         turtle = false,
+		turtleodds = 2
     },
     loc_vars = function(self, info_queue, card)
 	    if not card.ability.turtle then
 			return {
-				vars = {G.GAME.probabilities.normal}
+				vars = {G.GAME.probabilities.normal,card.ability.turtleodds}
 			}
 		else
 			return {
-				{vars = {G.GAME.probabilities.normal}},
+				{vars = {G.GAME.probabilities.normal,card.ability.turtleodds}},
 				key = 'turtle', set = 'Joker'
 				}
 		end
@@ -224,7 +228,7 @@ SMODS.Joker {
     calculate = function(self, card, context)
 		if context.blueprint then return end
         if context.game_over and not card.ability.turtle then
-		    if pseudorandom('malganis') < G.GAME.probabilities.normal / 2 then
+		    if pseudorandom('malganis') < G.GAME.probabilities.normal / card.ability.turtleodds then
 			    card:flip()
 				card.ability.turtle = true
 				card:flip()
@@ -388,10 +392,19 @@ SMODS.Joker {
     calculate = function(self, card, context)
 		if context.blueprint then return end
         if context.after and context.scoring_name == "High Card" and to_big(hand_chips) * to_big(mult) >= to_big(G.GAME.blind.chips) then
+		local _destroyed = {}
 		G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
 			for i = 1, #G.hand.cards do
                 G.hand.cards[i]:start_dissolve()
+				table.insert(_destroyed, G.hand.cards[i])
             end
+			for j = 1, #G.jokers.cards do
+				eval_card(G.jokers.cards[j], {
+					cardarea = G.jokers,
+					remove_playing_cards = true,
+					removed = _destroyed
+				})
+			end
         return true end }))
         end
     end
@@ -518,27 +531,29 @@ SMODS.Joker {
         }
     end,
     calculate = function(self, card, context)
-        if context.joker_main and card.ability.chips > 0 then
-            SMODS.calculate_effect({
-                message = localize { type = 'variable', key = 'a_chips', vars = {card.ability.chips}},
-                chip_mod = card.ability.chips,
-                colour = G.C.CHIPS
-            }, card)
-        end
-        if context.joker_main and card.ability.mult > 0 then
-            SMODS.calculate_effect({
-                message = localize { type = 'variable', key = 'a_mult', vars = {card.ability.mult}},
-                mult_mod = card.ability.mult, 
-                colour = G.C.MULT
-            }, card)
-        end
-        if context.joker_main and card.ability.mult > 1 then
-            return {
-                Xmult_mod = card.ability.xmult,
-                message = localize { type = 'variable', key = 'a_xmult', vars = { card.ability.xmult } }
-            }
-        end
-		
+    if context.joker_main and card.ability.chips > 0 then
+        SMODS.calculate_effect({
+            message = localize { type = 'variable', key = 'a_chips', vars = { card.ability.chips } },
+            chip_mod = card.ability.chips,
+            colour = G.C.CHIPS
+        }, card)
+    end
+
+    if context.joker_main and card.ability.mult > 0 then
+        SMODS.calculate_effect({
+            message = localize { type = 'variable', key = 'a_mult', vars = { card.ability.mult } },
+            mult_mod = card.ability.mult,
+            colour = G.C.MULT
+        }, card)
+    end
+
+    if context.joker_main and card.ability.xmult and card.ability.mult > 1 then
+        return {
+            Xmult_mod = card.ability.xmult,
+            message = localize { type = 'variable', key = 'a_xmult', vars = { card.ability.xmult } },
+            card = card
+        }
+    end	
 		if context.end_of_round and not context.repetition and context.game_over == false and not context.blueprint then
 			local diff
 			if G.GAME.blind:get_type() == "Small" then
@@ -1135,7 +1150,6 @@ SMODS.Joker {
 			end
 		end
 	end 
-
 }
 SMODS.Joker {
     key = "hollowness",
@@ -1563,7 +1577,6 @@ SMODS.Joker {
 			card:flip()
 			SMODS.calculate_effect({
                 message = "Split",
-				card = card,
 				playing_cards_created = _cards
             }, card)
 				for i = 1, #G.hand.cards do
@@ -1628,6 +1641,54 @@ SMODS.Joker {
         end
     end
 }
+SMODS.Joker {
+    key = "lobotomy",
+    name = "Lobotomy",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Lobotomy",
+        text = {
+            "{C:green}#1# in #2#{} chance to create",
+			"a {C:dark_edition}Black Hole{} when",
+			"{C:attention}score catches on fire{}"
+        }
+    },
+	config = {
+		lobotomyodds = 3
+    },
+	loc_vars = function(self, info_queue, card)
+		return {
+			vars = {G.GAME.probabilities.normal,card.ability.lobotomyodds}
+		}
+	end,
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 1,
+    pos = { x = 2, y = 4 },
+    cost = 3,
+    calculate = function(self, card, context)
+		if context.cardarea == G.jokers and context.final_scoring_step then
+			if to_big(hand_chips)*to_big(mult) > to_big(G.GAME.blind.chips) and pseudorandom('lobotomy') < G.GAME.probabilities.normal / card.ability.lobotomyodds then
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+					if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+						local Bhole = create_card('Spectral', G.consumeables, nil, nil, nil, true, 'c_black_hole')
+						Bhole:add_to_deck()
+						G.consumeables:emplace(Bhole)
+						G.GAME.consumeable_buffer = 0
+					end
+				return true end}))
+				return {
+                    message = "Fire in The Hole!",
+                    delay = 0.45, 
+                    card = card
+                }
+			end
+		end
+	end
+}
 
 SMODS.ConsumableType {
     key = 'GuestAppearance',
@@ -1669,6 +1730,7 @@ SMODS.Consumable{
 end,    
 use = function(self, card)
 	local totalrank = 0
+	local _destroyed = {}
         for i = 1, #G.hand.cards do
             local is_highlighted = false
             for j = 1, #G.hand.highlighted do
@@ -1680,8 +1742,16 @@ use = function(self, card)
             if not is_highlighted then
 				totalrank = totalrank + G.hand.cards[i]:get_id()
                 G.hand.cards[i]:start_dissolve()
+				table.insert(_destroyed, G.hand.cards[i])
             end
         end
+	for j = 1, #G.jokers.cards do
+				eval_card(G.jokers.cards[j], {
+					cardarea = G.jokers,
+					remove_playing_cards = true,
+					removed = _destroyed
+				})
+			end
 	local custom_jimbo = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_joker")
 			custom_jimbo:set_edition({negative = true})
 			custom_jimbo.ability.mult = totalrank / 2
@@ -2238,8 +2308,8 @@ SMODS.PokerHand {
 G.localization.descriptions.Other["masquerade_reminder"] = {
         name = "Masquerade the Blazing Dragon", --tooltip name
        text = {
-           "{C:chips}+25{} Chips",
-           "{C:mult}+20{} Mult",
+           "{C:chips}+#1#{} Chips",
+           "{C:mult}+#2#{} Mult",
            "Reduces full blind by",
 		   "{C:attention}0.8%{} for every scoring card"
        }
@@ -2262,13 +2332,14 @@ G.localization.descriptions.Joker['aluberbase'] =  {
 			},
     }	
 G.localization.descriptions.Joker['masquerade'] =  {
-        name = 'Masquerade the Blazing Dragon',
-        text = {"{C:chips}+25{} Chips", 
-            "{C:mult}+20{} Mult",
-            "Reduces full blind by 0.8%",
-			"for every scoring card"
-			},
-    }	
+        name = "Masquerade the Blazing Dragon", --tooltip name
+       text = {
+           "{C:chips}+#1#{} Chips",
+           "{C:mult}+#2#{} Mult",
+           "Reduces full blind by",
+		   "{C:attention}0.8%{} for every scoring card"
+       }
+   }	
 G.localization.descriptions.Joker['turtle'] =  {
         name = 'A Turtle',
         text = {"Not eternal"
