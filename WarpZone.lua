@@ -1554,7 +1554,6 @@ SMODS.Joker {
 			for i = 1, #G.hand.cards do
 				draw_card(G.hand, G.deck, nil, nil, nil, G.hand.cards[i])
 			end
-			G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.5,func = function()
 				_lleg = create_playing_card({front = G.P_CARDS["H"..'_'.."Wzon_Fo"], center = nil}, G.hand)
 				_lleg.ability.perma_x_mult = 3
 				_larm = create_playing_card({front = G.P_CARDS["S"..'_'.."Wzon_Fo"], center = nil}, G.hand)
@@ -1565,7 +1564,6 @@ SMODS.Joker {
 				_rarm.ability.perma_p_dollars = 5
 				_rleg = create_playing_card({front = G.P_CARDS["C"..'_'.."Wzon_Fo"], center = nil}, G.hand)
 				_rleg.ability.perma_mult = 25
-			return true end }))
 			G.E_MANAGER:add_event(Event({trigger = 'before',delay = 2,func = function()
 			for i = 1, #G.hand.cards do
 				if G.hand.cards[i].base.value == 'Wzon_Forbidden' then
@@ -1584,9 +1582,6 @@ SMODS.Joker {
 				end
 				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 1,func = function()
 					G.deck:shuffle()
-					for i = 1, (G.hand.config.card_limit - 3) do
-						draw_card(G.deck, G.hand, nil, nil, nil, G.deck[1])
-					end
 				return true end }))
             return true end }))
 		end
