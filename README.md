@@ -6,4 +6,4 @@ A Vanilla-Friendly Joker expansion mod for Balatro
 
 _Freh: Main dev
 
-u/r2d2upgrade: Sprites for Jimbo, the Forbidden One
+u/r2d2upgrade: Sprites for Jimbo the Forbidden One
