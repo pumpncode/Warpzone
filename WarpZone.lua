@@ -2167,7 +2167,8 @@ SMODS.Rank {
 	
 	in_pool = function(self, args)
 		return false
-	end, 	
+	end,
+	should_register = function() end,
 	loc_txt = {name = "Forbidden",}
 }
 SMODS.Suit {
@@ -2193,6 +2194,7 @@ SMODS.Suit {
 	in_pool = function(self, args)
 		return false
 	end,
+	should_register = function() end,
 }
 
 SMODS.PokerHandPart{ -- Spectrum base (Referenced from SixSuits, only used for Obliterate calculations)
