@@ -6,4 +6,5 @@ A Vanilla-Friendly Joker expansion mod for Balatro
 
 _Freh: Main dev
 
+u/Funk-Repair: Power Creep concept and sprite
 u/r2d2upgrade: Sprites for Jimbo the Forbidden One

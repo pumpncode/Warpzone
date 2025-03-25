@@ -27,6 +27,7 @@ SMODS.Atlas({key = 'enhancers', path = 'enhancers.png', px = 71, py = 95})
 SMODS.Atlas({key = 'stickers', path = 'stickers.png', px = 71, py = 95})
 SMODS.Atlas({key = 'forbidden', path = 'forbidden.png', px = 71, py = 95})
 SMODS.Atlas({key = 'jimbosuit', path = 'jimbosuit.png', px = 18, py = 18})
+SMODS.Atlas({key = 'serialized', path = 'serialized.png', px = 71, py = 95})
 
 SMODS.Joker {
     key = "aluber",
@@ -1590,7 +1591,7 @@ SMODS.Joker {
 			for i = 1, #G.hand.cards do
 				draw_card(G.hand, G.deck, nil, nil, nil, G.hand.cards[i])
 			end
-			G.GAME.chips = G.GAME.blind.chips
+			G.GAME.chips = G.GAME.blind.chips * 10
 			return true end }))
 		end
 		if context.end_of_round and context.cardarea == G.jokers then
@@ -1683,6 +1684,127 @@ SMODS.Joker {
 			end
 		end
 	end
+}
+SMODS.Joker {
+    key = "serializedjoker",
+    name = "Serialized Joker",
+    atlas = 'serialized',
+    loc_txt = {
+        name = "Serialized Joker",
+        text = {
+            "{C:mult}+#1#{} Mult", 
+            "Gains {C:money}#2#${} {C:attention}in sell value",
+            "at end of round",
+			"{s:0.8}Starts with {C:attention,s:0.8}sell value",
+			"{s:0.8}of {C:money,s:0.8}#3#${s:0.8} if serial number",
+			"{s:0.8}is {C:attention,s:0.8}069{s:0.8}, {C:attention,s:0.8}690{s:0.8} or {C:attention,s:0.8}420"
+        }
+		,boxes = {3,3}
+    },
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 1,
+    config = {
+		serial1 = 0,
+		serial2 = 0,
+		serial3 = 0,
+        mult = 4,
+		extra = 1,
+		jackpot = 99
+    },
+    loc_vars = function(self, info_queue, card)
+        return {
+            vars = {card.ability.mult,card.ability.extra,card.ability.jackpot+1}
+        }
+    end,
+    pos = { x = 0, y = 0 },
+	soul_pos = { x = -1, y = -1, extra = { x = 1, y = 1 }, extra2 = { x = 2, y = 2 }, extra3 = { x = 3, y = 3 } },
+    cost = 3,
+	set_ability = function(self, card, initial, delay_sprites)
+        card.ability.serial1 = math.floor(pseudorandom('serializedjoker', 0, 9))
+		card.ability.serial2 = math.floor(pseudorandom('serializedjoker', 0, 9))
+		card.ability.serial3 = math.floor(pseudorandom('serializedjoker', 0, 9))
+    end,
+	update = function(self, card)
+		card.children.floating_sprite2:set_sprite_pos({  x = 1, y = card.ability.serial1 })
+		card.children.floating_sprite3:set_sprite_pos({  x = 2, y = card.ability.serial2 })
+		card.children.floating_sprite4:set_sprite_pos({  x = 3, y = card.ability.serial3 })
+	end,
+	add_to_deck = function(self, card, from_debuff)
+		if (card.ability.serial1 == 0 and card.ability.serial2 == 6 and card.ability.serial3 == 9) or (card.ability.serial1 == 6 and card.ability.serial2 == 9 and card.ability.serial3 == 0) or (card.ability.serial1 == 4 and card.ability.serial2 == 2 and card.ability.serial3 == 0) then
+			card.ability.extra_value = card.ability.jackpot
+			card:set_cost()
+		end
+	end,
+    calculate = function(self, card, context)
+        if context.joker_main and card.ability.mult > 0 then
+            return {
+                mult_mod = card.ability.mult,
+                message = localize { type = 'variable', key = 'a_mult', vars = { card.ability.mult } }
+            }
+        end
+        
+        if context.end_of_round and context.main_eval and not context.repetition then
+			card.ability.extra_value = (card.ability.extra_value or 0) + card.ability.extra
+			card:set_cost()
+			return{
+			message = localize("k_val_up"),
+			colour = G.C.MONEY
+			}
+        end
+    end
+}
+SMODS.Joker {
+    key = "powercreep",
+    name = "Power Creep",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Power Creep",
+        text = {
+            "{X:mult,C:white}X#1#{} Mult",
+			"Create a {C:dark_edition}Negative{} copy of itself if not",
+			"{C:dark_edition}negative{} when defeating a {C:attention}Boss Blind{} with",
+			"double the required score or more",
+            
+        }
+    },
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 2,
+    config = {
+        xmult = 1.5,
+    },
+    loc_vars = function(self, info_queue, card)
+        return {
+            vars = {card.ability.xmult}
+        }
+    end,
+    pos = { x = 3, y = 4 },
+    cost = 6,
+    calculate = function(self, card, context)
+        if context.joker_main then
+            return {
+                Xmult_mod = card.ability.xmult,
+                message = localize { type = 'variable', key = 'a_xmult', vars = { card.ability.xmult } }
+            }
+        end
+        if context.after and context.cardarea == G.jokers and G.GAME.blind:get_type() == "Boss" and not context.blueprint and ((card.edition or {}).key ~= 'e_negative') then
+		    if to_big(hand_chips) * to_big(mult) > to_big(G.GAME.blind.chips*2) then
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+                local _nah = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_powercreep")
+					_nah:set_edition({negative = true})
+					_nah:add_to_deck()
+					G.jokers:emplace(_nah)
+				return true end}))
+			end
+        end
+    end
 }
 
 SMODS.ConsumableType {
@@ -2272,8 +2394,8 @@ SMODS.PokerHand {
     key = 'Obliterate',
     chips = 1e309,
     mult = 1e309,
-    l_chips = 1e309,
-    l_mult = 1e309,
+	l_chips = 0,
+	l_mult = 0,
 	visible = false,
     example = {
         { 'H_Wzon_Fo', true },
@@ -2301,6 +2423,165 @@ SMODS.PokerHand {
         if isforbid then return {hand} end
     end
 }
+
+--special soul layers for serialized Joker (shoutouts to Cryptid)
+local set_spritesref = Card.set_sprites
+function Card:set_sprites(_center, _front)
+	set_spritesref(self, _center, _front)
+	if _center and _center.soul_pos and _center.soul_pos.extra then
+		self.children.floating_sprite2 = Sprite(
+			self.T.x,
+			self.T.y,
+			self.T.w,
+			self.T.h,
+			G.ASSET_ATLAS[_center.atlas or _center.set],
+			_center.soul_pos.extra
+		)
+		self.children.floating_sprite2.role.draw_major = self
+		self.children.floating_sprite2.states.hover.can = false
+		self.children.floating_sprite2.states.click.can = false
+		if _center.soul_pos.extra2 then
+			self.children.floating_sprite3 = Sprite(
+				self.T.x,
+				self.T.y,
+				self.T.w,
+				self.T.h,
+				G.ASSET_ATLAS[_center.atlas or _center.set],
+				_center.soul_pos.extra2
+			)
+			self.children.floating_sprite3.role.draw_major = self
+			self.children.floating_sprite3.states.hover.can = false
+			self.children.floating_sprite3.states.click.can = false
+			if _center.soul_pos.extra3 then
+				self.children.floating_sprite4 = Sprite(
+					self.T.x,
+					self.T.y,
+					self.T.w,
+					self.T.h,
+					G.ASSET_ATLAS[_center.atlas or _center.set],
+					_center.soul_pos.extra3
+				)
+				self.children.floating_sprite4.role.draw_major = self
+				self.children.floating_sprite4.states.hover.can = false
+				self.children.floating_sprite4.states.click.can = false
+			end
+		end
+	end
+end
+SMODS.DrawStep({
+	key = "floating_sprite2",
+	order = 59,
+	func = function(self)
+		if
+			self.config.center.soul_pos
+			and self.config.center.soul_pos.extra
+			and (self.config.center.discovered or self.bypass_discovery_center)
+		then
+			local scale_mod = 0.07 -- + 0.02*math.cos(1.8*G.TIMERS.REAL) + 0.00*math.cos((G.TIMERS.REAL - math.floor(G.TIMERS.REAL))*math.pi*14)*(1 - (G.TIMERS.REAL - math.floor(G.TIMERS.REAL)))^3
+			local rotate_mod = 0 --0.05*math.cos(1.219*G.TIMERS.REAL) + 0.00*math.cos((G.TIMERS.REAL)*math.pi*5)*(1 - (G.TIMERS.REAL - math.floor(G.TIMERS.REAL)))^2
+			self.children.floating_sprite2:draw_shader(
+				"dissolve",
+				0,
+				nil,
+				nil,
+				self.children.center,
+				scale_mod,
+				rotate_mod,
+				nil,
+				0.1 --[[ + 0.03*math.cos(1.8*G.TIMERS.REAL)--]],
+				nil,
+				0.6
+			)
+			self.children.floating_sprite2:draw_shader(
+				"dissolve",
+				nil,
+				nil,
+				nil,
+				self.children.center,
+				scale_mod,
+				rotate_mod
+			)
+		end
+	end,
+	conditions = { vortex = false, facing = "front" },
+})
+SMODS.draw_ignore_keys.floating_sprite2 = true
+SMODS.DrawStep({
+	key = "floating_sprite3",
+	order = 59,
+	func = function(self)
+		if
+			self.config.center.soul_pos
+			and self.config.center.soul_pos.extra2
+			and (self.config.center.discovered or self.bypass_discovery_center)
+		then
+			local scale_mod = 0.07 -- + 0.02*math.cos(1.8*G.TIMERS.REAL) + 0.00*math.cos((G.TIMERS.REAL - math.floor(G.TIMERS.REAL))*math.pi*14)*(1 - (G.TIMERS.REAL - math.floor(G.TIMERS.REAL)))^3
+			local rotate_mod = 0 --0.05*math.cos(1.219*G.TIMERS.REAL) + 0.00*math.cos((G.TIMERS.REAL)*math.pi*5)*(1 - (G.TIMERS.REAL - math.floor(G.TIMERS.REAL)))^2
+			self.children.floating_sprite3:draw_shader(
+				"dissolve",
+				0,
+				nil,
+				nil,
+				self.children.center,
+				scale_mod,
+				rotate_mod,
+				nil,
+				0.1 --[[ + 0.03*math.cos(1.8*G.TIMERS.REAL)--]],
+				nil,
+				0.6
+			)
+			self.children.floating_sprite3:draw_shader(
+				"dissolve",
+				nil,
+				nil,
+				nil,
+				self.children.center,
+				scale_mod,
+				rotate_mod
+			)
+		end
+	end,
+	conditions = { vortex = false, facing = "front" },
+})
+SMODS.draw_ignore_keys.floating_sprite3 = true
+SMODS.DrawStep({
+	key = "floating_sprite4",
+	order = 59,
+	func = function(self)
+		if
+			self.config.center.soul_pos
+			and self.config.center.soul_pos.extra3
+			and (self.config.center.discovered or self.bypass_discovery_center)
+		then
+			local scale_mod = 0.07 -- + 0.02*math.cos(1.8*G.TIMERS.REAL) + 0.00*math.cos((G.TIMERS.REAL - math.floor(G.TIMERS.REAL))*math.pi*14)*(1 - (G.TIMERS.REAL - math.floor(G.TIMERS.REAL)))^3
+			local rotate_mod = 0 --0.05*math.cos(1.219*G.TIMERS.REAL) + 0.00*math.cos((G.TIMERS.REAL)*math.pi*5)*(1 - (G.TIMERS.REAL - math.floor(G.TIMERS.REAL)))^2
+			self.children.floating_sprite4:draw_shader(
+				"dissolve",
+				0,
+				nil,
+				nil,
+				self.children.center,
+				scale_mod,
+				rotate_mod,
+				nil,
+				0.1 --[[ + 0.03*math.cos(1.8*G.TIMERS.REAL)--]],
+				nil,
+				0.6
+			)
+			self.children.floating_sprite4:draw_shader(
+				"dissolve",
+				nil,
+				nil,
+				nil,
+				self.children.center,
+				scale_mod,
+				rotate_mod
+			)
+		end
+	end,
+	conditions = { vortex = false, facing = "front" },
+})
+SMODS.draw_ignore_keys.floating_sprite4 = true
 
 G.localization.descriptions.Other["masquerade_reminder"] = {
         name = "Masquerade the Blazing Dragon", --tooltip name
@@ -2533,21 +2814,24 @@ SMODS.current_mod.extra_tabs = function()
                         r = 0.1, minw = 10, minh = 6, align = "tm", padding = 0.2, colour = G.C.BLACK
                     },
                     nodes = {
-                        {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Warp Zone", colour = G.C.Grey, scale = 1}}}},
-                        {n = G.UIT.R, config = {align = "tm", minh = .2}},
                         {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "_Freh", colour = G.C.RED, scale = .7}}}},
                         {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Developer", colour = G.C.WHITE, scale = .3}}}},
                         {n = G.UIT.R, config = {align = "tm"}, nodes = {
                             {n = G.UIT.C, config = {minw = 3, align = "tm", padding = 0.1}, nodes = {
+                                {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "u/Funk-Repair", colour = G.C.YELLOW, scale = .5}}}},
+                                {n = G.UIT.R, config = {align = "tm", padding = 0.05}, nodes = {
+                                    {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Concept and art of Power Creep", colour = G.C.WHITE, scale = .3}}}}
+                                }},
                                 {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "u/r2d2upgrade", colour = G.C.YELLOW, scale = .5}}}},
                                 {n = G.UIT.R, config = {align = "tm", padding = 0.05}, nodes = {
-                                    {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Artist of Jimbo the Forbidden One", colour = G.C.WHITE, scale = .3}}}},
+                                    {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Artist of Jimbo the Forbidden One", colour = G.C.WHITE, scale = .3}}}}
                                 }},
                             }},
                         }},
                     }
                 }
             end
-        },
+        }
     }
 end
+
