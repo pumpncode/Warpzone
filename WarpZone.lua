@@ -1776,7 +1776,7 @@ SMODS.Joker {
     eternal_compat = true,
     perishable_compat = true,
     blueprint_compat = true,
-    rarity = 2,
+    rarity = 3,
     config = {
         xmult = 1.5,
     },
