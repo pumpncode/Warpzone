@@ -1835,6 +1835,10 @@ SMODS.Joker {
 	if next(SMODS.find_mod('Pokermon')) and card.ability.extra.ptype == "Plastic" and card.ability.extra.to_poison > 1 then
 		info_queue[#info_queue+1] = {set = 'Other', key = 'energy',specific_vars = {card.ability.extra.to_poison-1,energy_max}}
 	end
+	info_queue[#info_queue + 1] = {
+							set = "Other",
+							key = 'remaster',
+						}
 	return {vars = {card.ability.extra.to_poison,card.ability.evo_rqmt}}
   end,
   rarity = 1, 
@@ -3356,6 +3360,14 @@ G.localization.descriptions.Other["discostats"] = {
            "{C:mult}+#4#{} Mult",
            "{C:green}Dice Score:",
 		   "{C:green}#3# (#1# + #2# Bonus)"
+       }
+   }
+   G.localization.descriptions.Other["remaster"] = {
+        name = "Remaster",
+       text = {
+           "Transforms into a stronger joker",
+           "depending on its position",
+		   "{C:inactive}(Left: {C:attention}Lobstacle{C:inactive} / Right: {C:attention}Weevilite{C:inactive})"
        }
    }
 G.localization.descriptions.Joker['aluberbase'] =  {
