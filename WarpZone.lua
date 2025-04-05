@@ -28,6 +28,8 @@ SMODS.Atlas({key = 'stickers', path = 'stickers.png', px = 71, py = 95})
 SMODS.Atlas({key = 'forbidden', path = 'forbidden.png', px = 71, py = 95})
 SMODS.Atlas({key = 'jimbosuit', path = 'jimbosuit.png', px = 18, py = 18})
 SMODS.Atlas({key = 'serialized', path = 'serialized.png', px = 71, py = 95})
+SMODS.Atlas({key = 'cbeasts', path = 'cbeasts.png', px = 71, py = 95})
+SMODS.Atlas({key = 'pokermon', path = 'compat/pokermon.png', px = 71, py = 95})
 
 SMODS.Joker {
     key = "aluber",
@@ -179,7 +181,7 @@ SMODS.Joker {
         end
         
         if context.after and context.cardarea == G.jokers and not context.blueprint then
-		    if(G.GAME.chips + (to_big(hand_chips) * to_big(mult)) < G.GAME.blind.chips) then
+		    if(to_big(G.GAME.chips) + (to_big(hand_chips) * to_big(mult)) < G.GAME.blind.chips) then
                 card.ability.mult = card.ability.mult + card.ability.increase
                 return {
                     message = "+" .. tostring(card.ability.mult) .. " Mult",
@@ -1795,7 +1797,7 @@ SMODS.Joker {
             }
         end
         if context.after and context.cardarea == G.jokers and G.GAME.blind:get_type() == "Boss" and not context.blueprint and ((card.edition or {}).key ~= 'e_negative') then
-		    if to_big(hand_chips) * to_big(mult) > to_big(G.GAME.blind.chips*2) then
+		    if to_big(G.GAME.chips) + to_big(hand_chips) * to_big(mult) > to_big(G.GAME.blind.chips*2) then
 				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
                 local _nah = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_powercreep")
 					_nah:set_edition({negative = true})
@@ -1806,6 +1808,422 @@ SMODS.Joker {
         end
     end
 }
+traffikrab_requirement = function()
+	if next(SMODS.find_mod('Pokermon')) then
+		return 6
+	else
+		return 4
+	end
+end
+SMODS.Joker { 
+  key = "traffikrab",
+  loc_txt = {
+        name = "Traffikrab",
+        text = {
+            "Enhances {C:attention}#1#{} random card in",
+			"played hand to {C:attention}Poisonous{} when",
+			"{C:attention}score catches on fire{}",
+			"{C:inactive,s:0.8}(Improves already Poisonous cards)",
+			"{C:inactive,s:0.8}({C:attention,s:0.8}Remasters{C:inactive,s:0.8} after enhancing {C:attention,s:0.8}#2#{C:inactive,s:0.8} cards)",
+            
+        }
+    },
+  pos = {x = 0, y = 0},
+  config = {extra = {to_poison = 1, poisoned = 0, ptype = "Plastic"}, evo_rqmt = traffikrab_requirement()},
+  loc_vars = function(self, info_queue, card)
+	type_tooltipmine(self, info_queue, card)
+	if next(SMODS.find_mod('Pokermon')) and card.ability.extra.ptype == "Plastic" and card.ability.extra.to_poison > 1 then
+		info_queue[#info_queue+1] = {set = 'Other', key = 'energy',specific_vars = {card.ability.extra.to_poison-1,energy_max}}
+	end
+	return {vars = {card.ability.extra.to_poison,card.ability.evo_rqmt}}
+  end,
+  rarity = 1, 
+  cost = 4, 
+  stage = "Basic",
+  atlas = "cbeasts",
+  unlocked = true,
+  discovered = true,
+  eternal_compat = next(SMODS.find_mod('Pokermon')),
+  perishable_compat = next(SMODS.find_mod('Pokermon')),
+  blueprint_compat = true,
+  set_ability = function(self, card, initial, delay_sprites)
+		if pseudorandom('traffikrab') < (1 / 10) and next(SMODS.find_mod('Pokermon')) then
+			card.ability.extra.ptype = pseudorandom_element({"Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Dark", "Metal", "Colorless", "Fairy", "Dragon"})
+		end
+    end,
+	add_to_deck = function(self, card, from_debuff)
+		if card.ability.extra.ptype == "Plastic" then
+			G.GAME.pool_flags.plastic_mon = true
+		end
+		end,
+  update = function(self, card)
+	if next(SMODS.find_mod('Pokermon')) then
+		for index, value in ipairs({"Plastic", "Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Dark", "Metal", "Colorless", "Fairy", "Dragon"}) do
+			if value == card.ability.extra.ptype then
+				card.children.center:set_sprite_pos({x=index-1, y=0})
+			end
+		end
+	end
+  end,
+  calculate = function(self, card, context)
+    if context.cardarea == G.jokers and context.after then
+			if to_big(hand_chips)*to_big(mult) > to_big(G.GAME.blind.chips) then
+				local chosencard
+				for i = 1, card.ability.extra.to_poison do
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+					chosencard = pseudorandom_element(context.scoring_hand)
+					chosencard:juice_up(0.3, 0.5)
+					if chosencard.config.center and chosencard.config.center == G.P_CENTERS.m_Wzon_poisonous then
+						if not chosencard.edition then
+						chosencard:set_edition("e_foil",true)
+					else
+						if not chosencard.seal then
+							chosencard:set_seal("Red",true)
+						else
+							chosencard.ability.perma_bonus = chosencard.ability.perma_bonus or 0
+							chosencard.ability.perma_bonus = chosencard.ability.perma_bonus + 20
+						end
+					end
+					else
+						chosencard:set_ability(G.P_CENTERS.m_Wzon_poisonous, nil, false)
+					end
+				return true end }))
+				if not context.blueprint then
+				card.ability.extra.poisoned = card.ability.extra.poisoned + 1
+				end
+				end
+				if not context.blueprint then
+				return {
+                    message = tostring(card.ability.extra.poisoned)  ..  "/"  ..  tostring(self.config.evo_rqmt),
+                    delay = 0.45, 
+                    card = card
+                }
+				end
+			end
+		end
+	if next(SMODS.find_mod('Pokermon')) then
+	    return scaling_evo(self, card, context, what_remaster(card), card.ability.extra.poisoned, self.config.evo_rqmt)
+	elseif context.end_of_round and context.main_eval and not context.repetition and card.ability.extra.poisoned >= card.ability.evo_rqmt then
+		card:start_dissolve()
+		local remaster = create_card("Joker", G.jokers, nil, nil, nil, nil, what_remaster(card))
+		remaster:add_to_deck()
+		G.jokers:emplace(remaster)
+		return {
+                    message = "Remaster",
+                    card = remaster
+                }
+	end
+  end
+}
+remaster_rarity = function()
+	if next(SMODS.find_mod('Pokermon')) then
+		return "poke_safari"
+	else
+		return 2
+	end
+end
+SMODS.Joker { 
+  key = "lobstacle",
+  loc_txt = {
+        name = "Lobstacle",
+        text = {
+            "Enhances {C:attention}#1#{} random card in",
+			"played hand to {C:attention}Poisonous{} when",
+			"{C:attention}score catches on fire{}",
+			"{C:inactive,s:0.8}(Improves already Poisonous cards)",
+			"Gains {X:mult,C:white}X#3#{} Mult every time a",
+			"card is enhanced this way",
+			"{C:inactive,s:0.8}(Currently {X:mult,C:white,s:0.8}X#2#{C:inactive,s:0.8} Mult)"
+        }
+    },
+  pos = {x = 0, y = 1},
+  config = {extra = {to_poison = 1, ptype = "Plastic", Xmult = 1, Xmult_mod = .2}},
+  loc_vars = function(self, info_queue, card)
+	type_tooltipmine(self, info_queue, card)
+	if next(SMODS.find_mod('Pokermon')) and card.ability.extra.ptype == "Plastic" and card.ability.extra.to_poison > 1 then
+		info_queue[#info_queue+1] = {set = 'Other', key = 'energy',specific_vars = {card.ability.extra.to_poison-1,energy_max}}
+	end
+	return {vars = {card.ability.extra.to_poison,card.ability.extra.Xmult,card.ability.extra.Xmult_mod}}
+  end,
+  rarity = remaster_rarity(), 
+  cost = 8,
+  unlocked = true,
+  discovered = true,
+  stage = "One",
+  atlas = "cbeasts",
+  eternal_compat = next(SMODS.find_mod('Pokermon')),
+  perishable_compat = next(SMODS.find_mod('Pokermon')),
+  blueprint_compat = true,
+  yes_pool_flag = next(SMODS.find_mod('Pokermon')),
+  set_ability = function(self, card, initial, delay_sprites)
+		if pseudorandom('lobstacle') < (1 / 10) and next(SMODS.find_mod('Pokermon')) then
+			card.ability.extra.ptype = pseudorandom_element({"Grass", "Fire", "Water", "Lightning", "Fighting", "Dark", "Metal", "Colorless", "Fairy", "Dragon"})
+		end
+    end,
+	add_to_deck = function(self, card, from_debuff)
+		if card.ability.extra.ptype == "Plastic" then
+			G.GAME.pool_flags.plastic_mon = true
+		end
+		end,
+  update = function(self, card)
+	if next(SMODS.find_mod('Pokermon')) then
+		for index, value in ipairs({"Plastic", "Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Dark", "Metal", "Colorless", "Fairy", "Dragon"}) do
+			if value == card.ability.extra.ptype then
+				card.children.center:set_sprite_pos({x=index-1, y=1})
+			end
+		end
+	end
+  end,
+  calculate = function(self, card, context)
+    if context.joker_main and card.ability.extra.Xmult > 1 then
+            return {
+                Xmult_mod = card.ability.extra.Xmult,
+                message = localize { type = 'variable', key = 'a_xmult', vars = { card.ability.xmult } }
+            }
+        end
+    if context.cardarea == G.jokers and context.after then
+			if to_big(hand_chips)*to_big(mult) > to_big(G.GAME.blind.chips) then
+				local chosencard
+				for i = 1, card.ability.extra.to_poison do
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+					chosencard = pseudorandom_element(context.scoring_hand)
+					chosencard:juice_up(0.3, 0.5)
+					if not context.blueprint then
+					card.ability.extra.Xmult = card.ability.extra.Xmult + card.ability.extra.Xmult_mod
+					end
+					if chosencard.config.center and chosencard.config.center == G.P_CENTERS.m_Wzon_poisonous then
+						if not chosencard.edition then
+						chosencard:set_edition("e_foil",true)
+					else
+						if not chosencard.seal then
+							chosencard:set_seal("Red",true)
+						else
+							chosencard.ability.perma_bonus = chosencard.ability.perma_bonus or 0
+							chosencard.ability.perma_bonus = chosencard.ability.perma_bonus + 20
+						end
+					end
+					else
+						chosencard:set_ability(G.P_CENTERS.m_Wzon_poisonous, nil, false)
+					end
+				return true end }))
+				end
+				if not context.blueprint then
+				return {
+                    message = "Upgrade!",
+                    delay = 0.45, 
+                    card = card,
+					colour = G.C.RED
+                }
+				end
+			end
+		end
+	end
+}
+SMODS.Joker { 
+  key = "weevilite",
+  loc_txt = {
+        name = "Weevilite",
+        text = {
+            "{C:attention}Poisonous{} cards in played hand spread",
+			"to adjacent cards {C:attention}#1#{} #2#",
+			"{C:inactive,s:0.8}(Improves already Poisonous cards)",
+			"Enhances {C:attention}#1#{} random card in played hand",
+			"to {C:attention}Poisonous{} instead if hand has none"
+        }
+    },
+  pos = {x = 0, y = 2},
+  config = {extra = {to_poison = 1, ptype = "Plastic"},nopoison = false},
+  loc_vars = function(self, info_queue, card)
+	type_tooltipmine(self, info_queue, card)
+	if next(SMODS.find_mod('Pokermon')) and card.ability.extra.ptype == "Plastic" and card.ability.extra.to_poison > 1 then
+		info_queue[#info_queue+1] = {set = 'Other', key = 'energy',specific_vars = {card.ability.extra.to_poison-1,energy_max}}
+	end
+	local _time
+	if card.ability.extra.to_poison == 1 then
+		_time = "time"
+	else
+		_time = "times"
+	end
+	return {vars = {card.ability.extra.to_poison,_time}}
+  end,
+  rarity = remaster_rarity(), 
+  cost = 8,
+  unlocked = true,
+  discovered = true,
+  stage = "One",
+  atlas = "cbeasts",
+  eternal_compat = next(SMODS.find_mod('Pokermon')),
+  perishable_compat = next(SMODS.find_mod('Pokermon')),
+  blueprint_compat = true,
+  yes_pool_flag = next(SMODS.find_mod('Pokermon')),
+  set_ability = function(self, card, initial, delay_sprites)
+		if pseudorandom('lobstacle') < (1 / 10) and next(SMODS.find_mod('Pokermon')) then
+			card.ability.extra.ptype = pseudorandom_element({"Grass", "Fire", "Water", "Lightning", "Fighting", "Dark", "Metal", "Colorless", "Fairy", "Dragon"})
+		end
+    end,
+	add_to_deck = function(self, card, from_debuff)
+		if card.ability.extra.ptype == "Plastic" then
+			G.GAME.pool_flags.plastic_mon = true
+		end
+		end,
+  update = function(self, card)
+	if next(SMODS.find_mod('Pokermon')) then
+		for index, value in ipairs({"Plastic", "Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Dark", "Metal", "Colorless", "Fairy", "Dragon"}) do
+			if value == card.ability.extra.ptype then
+				card.children.center:set_sprite_pos({x=index-1, y=2})
+			end
+		end
+	end
+  end,
+  calculate = function(self, card, context)
+    if context.after then
+        card.ability.nopoison = false
+    end
+
+    if context.cardarea == G.jokers and context.before then
+        for i = 1, #context.scoring_hand do
+            if context.scoring_hand[i].config.center and context.scoring_hand[i].config.center == G.P_CENTERS.m_Wzon_poisonous then
+                return
+            end
+        end
+
+        local chosencard
+        for i = 1, card.ability.extra.to_poison do
+            G.E_MANAGER:add_event(Event({
+                trigger = 'after',
+                delay = 0.1,
+                func = function()
+                    chosencard = pseudorandom_element(context.scoring_hand)
+                    chosencard:juice_up(0.3, 0.5)
+                    card:juice_up(0.3, 0.5)
+                    if chosencard.config.center and chosencard.config.center == G.P_CENTERS.m_Wzon_poisonous then
+                        if not chosencard.edition then
+                            chosencard:set_edition("e_foil", true)
+                        elseif not chosencard.seal then
+                            chosencard:set_seal("Red", true)
+                        else
+                            chosencard.ability.perma_bonus = chosencard.ability.perma_bonus or 0
+                            chosencard.ability.perma_bonus = chosencard.ability.perma_bonus + 20
+                        end
+                    else
+                        chosencard:set_ability(G.P_CENTERS.m_Wzon_poisonous, nil, false)
+                    end
+                    return true
+                end
+            }))
+        end
+        card.ability.nopoison = true
+    end
+
+    if context.cardarea == G.play and context.repetition and not context.repetition_only and card.ability.nopoison == false then
+        for i = 1, #context.scoring_hand do
+            if context.scoring_hand[i] == context.other_card and context.scoring_hand[i].config.center and context.scoring_hand[i].config.center == G.P_CENTERS.m_Wzon_poisonous then
+                if context.scoring_hand[i - 1] then
+                    for j = 1, card.ability.extra.to_poison do
+                        G.E_MANAGER:add_event(Event({
+                            trigger = 'after',
+                            delay = 0.1,
+                            func = function()
+                                context.scoring_hand[i - 1]:juice_up(0.3, 0.5)
+                                card:juice_up(0.3, 0.5)
+                                if context.scoring_hand[i - 1].config.center and context.scoring_hand[i - 1].config.center == G.P_CENTERS.m_Wzon_poisonous then
+                                    if not context.scoring_hand[i - 1].edition then
+                                        context.scoring_hand[i - 1]:set_edition("e_foil", true)
+                                    elseif not context.scoring_hand[i - 1].seal then
+                                        context.scoring_hand[i - 1]:set_seal("Red", true)
+                                    else
+                                        context.scoring_hand[i - 1].ability.perma_bonus = context.scoring_hand[i - 1].ability.perma_bonus or 0
+                                        context.scoring_hand[i - 1].ability.perma_bonus = context.scoring_hand[i - 1].ability.perma_bonus + 20
+                                    end
+                                else
+                                    context.scoring_hand[i - 1]:set_ability(G.P_CENTERS.m_Wzon_poisonous, nil, false)
+                                end
+                                return true
+                            end
+                        }))
+                    end
+                end
+
+                if context.scoring_hand[i + 1] then
+                    for j = 1, card.ability.extra.to_poison do
+                        G.E_MANAGER:add_event(Event({
+                            trigger = 'after',
+                            delay = 0.1,
+                            func = function()
+                                context.scoring_hand[i + 1]:juice_up(0.3, 0.5)
+                                card:juice_up(0.3, 0.5)
+                                if context.scoring_hand[i + 1].config.center and context.scoring_hand[i + 1].config.center == G.P_CENTERS.m_Wzon_poisonous then
+                                    if not context.scoring_hand[i + 1].edition then
+                                        context.scoring_hand[i + 1]:set_edition("e_foil", true)
+                                    elseif not context.scoring_hand[i + 1].seal then
+                                        context.scoring_hand[i + 1]:set_seal("Red", true)
+                                    else
+                                        context.scoring_hand[i + 1].ability.perma_bonus = context.scoring_hand[i + 1].ability.perma_bonus or 0
+                                        context.scoring_hand[i + 1].ability.perma_bonus = context.scoring_hand[i + 1].ability.perma_bonus + 20
+                                    end
+                                else
+                                    context.scoring_hand[i + 1]:set_ability(G.P_CENTERS.m_Wzon_poisonous, nil, false)
+                                end
+                                return true
+                            end
+                        }))
+                    end
+                end
+            end
+        end
+    end
+end
+
+}
+if next(SMODS.find_mod('Pokermon')) then
+SMODS.Joker { 
+  key = "magikrab",
+  loc_txt = {
+        name = "Magikrab",
+        text = {
+            "Retrigger all cards in played",
+			"hand, {C:attention}Poison{} cards retrigger",
+			"{C:attention}#1#{} more #2#",
+        }
+    },
+  pos = {x = 5, y = 1},
+  config = {extra = {to_poison = 1, ptype = "Psychic"}},
+  loc_vars = function(self, info_queue, card)
+	type_tooltipmine(self, info_queue, card)
+	local _time
+	if card.ability.extra.to_poison == 1 then
+		_time = "time"
+	else
+		_time = "times"
+	end
+	return {vars = {card.ability.extra.to_poison,_time}}
+  end,
+  rarity = "poke_safari", 
+  cost = 10,
+  unlocked = true,
+  discovered = true,
+  stage = "One",
+  atlas = "cbeasts",
+  blueprint_compat = true,
+  calculate = function(self, card, context)
+    if context.cardarea == G.play and context.repetition and not context.repetition_only then
+			if context.other_card.config.center == G.P_CENTERS.m_Wzon_poisonous then
+				return {
+					message = 'Again!',
+					repetitions = card.ability.extra.to_poison + 1,
+					card = card
+				}
+			else
+				return {
+					message = 'Again!',
+					repetitions = 1,
+					card = card
+				}
+			end
+		end
+  end
+}
+end
 
 SMODS.ConsumableType {
     key = 'GuestAppearance',
@@ -2120,6 +2538,323 @@ use = function(self, card)
 	play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
 end
 }
+if next(SMODS.find_mod('Pokermon')) then      --Pokermon compat stuff
+SMODS.Consumable{
+  name = "plastic_energy",
+  key = "plastic_energy",
+  loc_txt = {
+                name = "Plastic Energy",
+                text = {
+                    "Increases most {C:attention}scoring{} and {C:money}${} number",
+                    "values of leftmost or selected {C:attention}Plastic{} type",
+                    "Joker permanently if able",
+                    "{C:inactive}(Max of {C:attention}#1#{C:inactive} increases per Joker)",
+                },
+            },
+  set = "Energy",
+  loc_vars = function(self, info_queue, center)
+	type_tooltip(self, info_queue, center)
+    return {vars = {(pokermon_config.unlimited_energy and localize("poke_unlimited_energy")) or energy_max}}
+  end,
+  yes_pool_flag = 'plastic_mon',
+  pos = { x = 0, y = 0 },
+  atlas = "pokermon",
+  cost = 4,
+  etype = "Plastic",
+  unlocked = true,
+  discovered = true,
+  can_use = function(self, card)
+    if not G.jokers.highlighted or #G.jokers.highlighted ~= 1 then
+      return energy_can_use(self, card)
+    else
+      return highlighted_energy_can_use(self, card)
+    end
+  end,
+  use = function(self, card, area, copier)
+    if not G.jokers.highlighted or #G.jokers.highlighted ~= 1 then
+      return energy_use(self, card, area, copier)
+    else
+      return highlighted_energy_use(self, card, area, copier)
+    end
+  end
+}
+SMODS.Consumable{
+  name = "ritual",
+  key = "ritual",loc_txt = {
+                name = "Ritual",
+                text = {
+                    "Transforms selected Joker with a {C:pink}Type{}",
+                    "into one with different {C:pink}Type{} and",
+                    "same {C:attention}Family{} and {C:attention}Stage{} {C:inactive}(if possible)",
+					"or vice-versa"
+                },
+            },
+  set = "Spectral",
+  pos = { x = 1, y = 0 },
+  atlas = "pokermon",
+  cost = 3,
+  unlocked = true,
+  discovered = true,
+  use = function(self, card)
+    local selected = G.jokers.highlighted[1]
+    local _eeveelutions = {"j_poke_vaporeon", "j_poke_jolteon", "j_poke_flareon", "j_poke_espeon", "j_poke_umbreon", "j_poke_glaceon", "j_poke_leafeon", "j_poke_sylveon"}
+
+    if selected.config.center_key == "j_Wzon_traffikrab" or selected.config.center_key == "j_Wzon_lobstacle" or selected.config.center_key == "j_Wzon_weevilite" then
+        local typelist = {"Plastic", "Grass", "Fire", "Water", "Lightning", "Fighting", "Dark", "Metal", "Colorless", "Fairy", "Dragon"}
+        local _who = (selected.config.center_key == "j_Wzon_traffikrab") 
+            and {"j_Wzon_traffikrab"} 
+            or {"j_Wzon_lobstacle", "j_Wzon_weevilite"}
+        
+        return {
+            message = evolve(selected, selected, "lol", pseudorandom_element(_who), pseudorandom_element(typelist))
+        }
+    else
+        for index, value in ipairs(_eeveelutions) do
+            if value == selected.config.center_key then
+                table.remove(_eeveelutions, index)
+                return {
+                    message = evolve(selected, selected, "lol", pseudorandom_element(_eeveelutions))
+                }
+            end
+        end
+
+        local _type = selected.ability.extra.ptype
+        return {
+            message = evolve(selected, selected, "lol", get_random_poke_key("ritual", stage, pokerarity, area, _type))
+        }
+    end
+end,
+  can_use = function(self, card)
+    return G.jokers.highlighted and #G.jokers.highlighted == 1 and has_type(G.jokers.highlighted[1])
+  end,
+}
+local old_matching_energy = matching_energy
+matching_energy = function(card)
+	if card.ability.extra and type(card.ability.extra) == "table" and card.ability.extra.ptype and card.ability.extra.ptype == "Plastic" then
+		return "c_Wzon_plastic_energy"
+	end
+	return old_matching_energy(card)
+end
+table.insert(energy_whitelist, "to_poison")
+energy_values.to_poison = 1
+table.insert(family, {"j_Wzon_traffikrab","j_Wzon_lobstacle","j_Wzon_weevilite","j_Wzon_magikrab"})
+local old_scaling_evo = scaling_evo
+scaling_evo = function(self, card, context, forced_key, current, target)
+	if card.config.center_key == "j_Wzon_traffikrab" then
+		if (SMODS.Mods["Talisman"] or {}).can_load then
+    current = to_big(current)
+    target = to_big(target)
+  end
+  if can_evolve(self, card, context, forced_key) and current >= target then
+    return {
+      message = evolve (self, card, context, forced_key, card.ability.extra.ptype)
+    }
+  end
+	else
+		return old_scaling_evo
+	end
+end
+local old_evolve = evolve
+evolve = function(self, card, context, forced_key, bootleg)
+if bootleg then
+  if not context.retrigger_joker then
+    local previous_position = nil
+    local poketype_list = nil
+    local previous_edition = nil
+    local previous_perishable = nil
+    local previous_perish_tally = nil
+    local previous_eternal = nil
+    local previous_rental = nil
+    local previous_energy_count = nil
+    local previous_c_energy_count = nil
+    local shiny = nil
+    local type_sticker = nil
+    local scaled_values = nil
+    local reset_apply_type = nil
+    local previous_extra_value = nil
+    local previous_targets = nil
+    local previous_rank = nil
+    local previous_id = nil
+    local previous_cards_scored = nil
+    local previous_upgrade = nil
+    local previous_mega = nil
+    
+    for i = 1, #G.jokers.cards do
+      if G.jokers.cards[i] == card then
+        previous_position = i
+        break
+      end
+    end
+    
+    if card.edition then
+      previous_edition = card.edition
+      if card.edition.poke_shiny then
+        shiny = true
+      end
+    end
+    
+    if card.ability.perishable then
+      previous_perishable = card.ability.perishable
+      previous_perish_tally = card.ability.perish_tally
+    end
+      
+    if card.ability.eternal then
+      previous_eternal = card.ability.eternal
+    end
+
+    if card.ability.rental then
+      previous_rental = card.ability.rental
+    end
+    
+    if card.ability.extra and card.ability.extra.energy_count then
+      previous_energy_count  = card.ability.extra.energy_count
+    end
+      
+    if card.ability.extra and card.ability.extra.c_energy_count then
+      previous_c_energy_count  = card.ability.extra.c_energy_count
+    end 
+    
+    scaled_values = copy_scaled_values(card)
+
+    if type_sticker_applied then
+      poketype_list = {"grass", "fire", "water", "lightning", "psychic", "fighting", "colorless", "dark", "metal", "fairy", "dragon", "earth"}
+      for l, v in pairs(poketype_list) do
+        if card.ability[v.."_sticker"] then
+          type_sticker = v
+          break
+        end
+      end
+    end
+    
+    if card.ability.extra_value then
+      previous_extra_value = card.ability.extra_value
+    end
+    
+    if card.ability.extra and card.ability.extra.targets then
+      previous_targets = card.ability.extra.targets
+    end
+    
+    if card.ability.name == "fidough" then
+      previous_rank = card.ability.extra.rank
+      previous_id = card.ability.extra.id
+    end
+    
+    if card.ability.name == "spearow" then
+      previous_cards_scored = card.ability.extra.cards_scored
+      previous_upgrade = card.ability.extra.upgrade
+    end
+    
+    if card.config.center.rarity == "poke_mega" then
+      previous_mega = true
+    end
+    
+    G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.1, func = function()
+      remove(self, card, context)
+    return true end }))
+    
+    if G.GAME.modifiers.apply_type then
+      G.GAME.modifiers.apply_type = false
+      reset_apply_type = true
+    end
+    
+    local temp_card = {set = "Joker", area = G.jokers, key = forced_key, no_edition = true}
+    local new_card = SMODS.create_card(temp_card)
+    
+    new_card.states.visible = false
+    
+    if reset_apply_type then
+      G.GAME.modifiers.apply_type = true
+    end
+    
+    if previous_edition then
+      if shiny then
+        local edition = {poke_shiny = true}
+         new_card:set_edition(edition, true)
+         new_card.config.shiny_on_add = true
+         SMODS.change_booster_limit(-1)
+      else
+        new_card:set_edition(previous_edition, true)
+      end
+    end
+    
+    if previous_perishable then
+       new_card.ability.perishable = previous_perishable
+       if previous_mega or card.ability.extra.devolved or card.ability.perish_tally <= 0 then
+        new_card.ability.extra.devolved = true
+        new_card.ability.perish_tally = previous_perish_tally
+       else
+         new_card.ability.perish_tally = G.GAME.perishable_rounds
+       end
+    end
+
+    if previous_eternal then
+      new_card.ability.eternal = previous_eternal
+    end
+
+    if previous_rental then
+      new_card.ability.rental = previous_rental
+    end
+    
+    if new_card.ability and new_card.ability.extra and previous_energy_count then
+      new_card.ability.extra.energy_count = previous_energy_count
+    end
+    
+    if new_card.ability and new_card.ability.extra and previous_c_energy_count then
+      new_card.ability.extra.c_energy_count = previous_c_energy_count
+    end
+    
+    if new_card.ability and new_card.ability.extra and (new_card.ability.extra.energy_count or new_card.ability.extra.c_energy_count) then
+      energize(new_card, nil, true)
+    end
+    
+    if scaled_values then
+      for l, v in pairs(scaled_values) do
+        if v and v > 0 and new_card.ability and new_card.ability.extra and type(new_card.ability.extra) == "table" and new_card.ability.extra[l] and v > new_card.ability.extra[l] then
+          new_card.ability.extra[l] = v
+        end
+      end
+    end
+    
+    if type_sticker then
+      apply_type_sticker(new_card, type_sticker)
+    end
+    
+    if previous_extra_value then
+      new_card.ability.extra_value = previous_extra_value
+      new_card:set_cost()
+    end
+    
+    if previous_targets then
+      new_card.ability.extra.targets = previous_targets
+    end
+    
+    if previous_rank and previous_id then
+      new_card.ability.extra.rank = previous_rank
+      new_card.ability.extra.id = previous_id
+    end
+    
+    if previous_cards_scored then
+      if previous_cards_scored >= 15 then
+        previous_upgrade = true
+        previous_cards_scored = previous_cards_scored - 15
+      end
+      new_card.ability.extra.cards_scored = previous_cards_scored
+      new_card.ability.extra.upgrade = previous_upgrade
+    end
+    new_card.ability.extra.ptype = bootleg
+    G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.1, func = function()
+        new_card:add_to_deck()
+        G.jokers:emplace(new_card, previous_position)
+        new_card.states.visible = true
+    return true end }))
+
+    return localize("poke_evolve_success")
+  end
+else
+return old_evolve(self, card, context, forced_key)
+end
+end
+end
 
 local old_g_funcs_check_for_buy_space = G.FUNCS.check_for_buy_space --thank you More Fluff!
 G.FUNCS.check_for_buy_space = function(card)
@@ -2148,6 +2883,28 @@ G.FUNCS.can_select_card = function(e)
 end
 to_big = to_big or function(value)
   return value
+end
+type_tooltipmine = function(self, info_queue, card)
+	if card.ability.extra.ptype and card.ability.extra.ptype == "Plastic" and next(SMODS.find_mod('Pokermon')) then
+		info_queue[#info_queue+1] = {set = 'Other', key = 'Plastic'}
+	elseif next(SMODS.find_mod('Pokermon')) then
+		return type_tooltip(self, info_queue, card)
+	end
+end
+what_remaster = function(_card)
+if next(SMODS.find_mod('Pokermon')) and _card.ability.extra.ptype == "Psychic" then
+	return "j_Wzon_magikrab"
+else
+	for i = 1, #G.jokers.cards do
+		if G.jokers.cards[i] == _card then
+			if i > #G.jokers.cards/2 then
+				return "j_Wzon_weevilite"
+			else
+				return "j_Wzon_lobstacle"
+			end
+		end
+	end
+end
 end
 
 SMODS.Enhancement{
@@ -2802,6 +3559,12 @@ G.localization.descriptions.Joker['composure'] =  {
 			"your {C:attention}most played poker{} hand"
 			},
     }
+G.localization.descriptions.Other['Plastic'] =  {
+        name = "Type",
+                text = {
+                  "{X:mult,C:white}Plastic{}",
+                },
+    }
 
 SMODS.current_mod.extra_tabs = function()
     return {
@@ -2825,6 +3588,10 @@ SMODS.current_mod.extra_tabs = function()
                                 {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "u/r2d2upgrade", colour = G.C.YELLOW, scale = .5}}}},
                                 {n = G.UIT.R, config = {align = "tm", padding = 0.05}, nodes = {
                                     {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Artist of Jimbo the Forbidden One", colour = G.C.WHITE, scale = .3}}}}
+                                }},
+                                {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Joey J. Jester", colour = G.C.BLUE, scale = .5}}}},
+                                {n = G.UIT.R, config = {align = "tm", padding = 0.05}, nodes = {
+                                    {n = G.UIT.R, config = {align = "tm"}, nodes = {{n = G.UIT.T, config = {text = "Original card frame sprites for Pokermon Jokers", colour = G.C.WHITE, scale = .3}}}}
                                 }},
                             }},
                         }},
