@@ -2639,7 +2639,6 @@ matching_energy = function(card)
 	end
 	return old_matching_energy(card)
 end
-table.insert(energy_whitelist, "to_poison")
 energy_values.to_poison = 1
 table.insert(family, {"j_Wzon_traffikrab","j_Wzon_lobstacle","j_Wzon_weevilite","j_Wzon_magikrab"})
 local old_scaling_evo = scaling_evo
