@@ -85,9 +85,12 @@ SMODS.Joker {
                 colour = G.C.MULT
             }, context.blueprint_card or card)
         end
-
-        if context.first_hand_drawn and card.ability.transform == 0 and not context.blueprint then
+		
+		if context.setting_blind then
 			card.ability.fullblind = G.GAME.blind.chips
+		end
+		
+        if context.first_hand_drawn and card.ability.transform == 0 and not context.blueprint then
             local eval = function() return G.GAME.current_round.discards_used == 0 and not G.RESET_JIGGLES end
             juice_card_until(card, eval, true)
         end
@@ -1251,6 +1254,7 @@ SMODS.Joker {
 				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
 				heart:add_to_deck()
 				G.jokers:emplace(heart)
+				G.GAME.pool_flags.corrupt_heart_flag = true
 			end
 			end
 		end,
@@ -1269,6 +1273,7 @@ SMODS.Joker {
 				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
 				heart:add_to_deck()
 				G.jokers:emplace(heart)
+				G.GAME.pool_flags.corrupt_heart_flag = true
 			end
 			end
 		end,
@@ -1310,6 +1315,7 @@ SMODS.Joker {
 				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
 				heart:add_to_deck()
 				G.jokers:emplace(heart)
+				G.GAME.pool_flags.corrupt_heart_flag = true
 			end
 			end
 		end,
@@ -1328,6 +1334,7 @@ SMODS.Joker {
 				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
 				heart:add_to_deck()
 				G.jokers:emplace(heart)
+				G.GAME.pool_flags.corrupt_heart_flag = true
 			end
 			end
 		end,
@@ -1369,6 +1376,7 @@ SMODS.Joker {
 				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
 				heart:add_to_deck()
 				G.jokers:emplace(heart)
+				G.GAME.pool_flags.corrupt_heart_flag = true
 			end
 			end
 		end,
@@ -1387,6 +1395,7 @@ SMODS.Joker {
 				local heart = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_Wzon_corruptheart")
 				heart:add_to_deck()
 				G.jokers:emplace(heart)
+				G.GAME.pool_flags.corrupt_heart_flag = true
 			end
 			end
 		end,
@@ -1465,7 +1474,7 @@ SMODS.Joker {
 			"{C:inactive}(must have room){}"
         }
     },
-	yes_pool_flag = 'ironclad_bought' and 'silent_bought' and 'defect_bought',
+	yes_pool_flag = 'corrupt_heart_flag',
     unlocked = true,
     discovered = true,
     eternal_compat = true,
