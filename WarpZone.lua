@@ -4091,7 +4091,7 @@ G.localization.descriptions.Joker['planeswalkermid'] =  {
 G.localization.descriptions.Joker['planeswalkerright'] =  {
         name = 'Planeswalker',
         text = {"When {C:attention}Blind{} is selected,",
-				"lose {C:attention}#3#{} loyalty and creates {C:attention}#4#",
+				"lose {C:attention}#3#{} loyalty and create {C:attention}#4#",
 				"{C:dark_edition}Polychrome{}, {C:red}Red Seal{}, {C:attention}Steel Kings",
 				"{C:inactive}({C:attention}#1#{C:inactive} loyalty)"
 			},
@@ -4122,7 +4122,7 @@ G.localization.descriptions.Other['planeswalkermid'] =  {
 G.localization.descriptions.Other['planeswalkerright'] =  {
         name = 'Right',
         text = {"When {C:attention}Blind{} is selected,",
-				"lose {C:attention}#1#{} loyalty and creates {C:attention}#2#",
+				"lose {C:attention}#1#{} loyalty and create {C:attention}#2#",
 				"{C:dark_edition}Polychrome{}, {C:red}Red Seal{}, {C:attention}Steel Kings",
 			},
     }
