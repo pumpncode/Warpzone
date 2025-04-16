@@ -30,6 +30,8 @@ SMODS.Atlas({key = 'jimbosuit', path = 'jimbosuit.png', px = 18, py = 18})
 SMODS.Atlas({key = 'serialized', path = 'serialized.png', px = 71, py = 95})
 SMODS.Atlas({key = 'cbeasts', path = 'cbeasts.png', px = 71, py = 95})
 SMODS.Atlas({key = 'pokermon', path = 'compat/pokermon.png', px = 71, py = 95})
+SMODS.Atlas({key = 'tarots', path = 'tarots.png', px = 71, py = 95})
+SMODS.Atlas({key = 'planeswalker', path = 'planeswalker.png', px = 71, py = 95})
 
 SMODS.Joker {
     key = "aluber",
@@ -329,6 +331,7 @@ SMODS.Joker {
         end
     end
 }
+if not next(SMODS.find_mod('MoreFluff')) then
 SMODS.Joker {
     key = "stack",
     name = "Stack",
@@ -354,6 +357,7 @@ SMODS.Joker {
 		G.jokers.config.card_limit = G.jokers.config.card_limit - 1
 		end
 }
+end
 SMODS.Joker {
     key = "unocard",
     name = "Uno Card",
@@ -1493,7 +1497,7 @@ SMODS.Joker {
         text = {
             "{C:attention}Splits{} into {C:attention}5{} {C:attention}Forbidden{} cards added to",
 			"your {C:attention}deck{} when first hand is drawn",
-			"{C:red}Destroys itself{} if {C:attention}copied{} or your",
+			"{C:red}Self destructs{} if {C:attention}copied{} or your",
 			"{C:attention}full deck{} is not between",
 			"{C:attention}40{} and {C:attention}60{} cards"
         }
@@ -1905,9 +1909,9 @@ SMODS.Joker {
 				end
 			end
 		end
-	if next(SMODS.find_mod('Pokermon')) then
+	if next(SMODS.find_mod('Pokermon')) and not context.blueprint then
 	    return scaling_evo(self, card, context, what_remaster(card), card.ability.extra.poisoned, self.config.evo_rqmt)
-	elseif context.end_of_round and context.main_eval and not context.repetition and card.ability.extra.poisoned >= card.ability.evo_rqmt then
+	elseif context.end_of_round and context.main_eval and not context.repetition and card.ability.extra.poisoned >= card.ability.evo_rqmt and not context.blueprint then
 		card:start_dissolve()
 		local remaster = create_card("Joker", G.jokers, nil, nil, nil, nil, what_remaster(card))
 		remaster:add_to_deck()
@@ -1941,7 +1945,7 @@ SMODS.Joker {
         }
     },
   pos = {x = 0, y = 1},
-  config = {extra = {to_poison = 1, ptype = "Plastic", Xmult = 1, Xmult_mod = .2}},
+  config = {extra = {to_poison = 1, ptype = "Plastic", Xmult = 1, Xmult_mod = .25}},
   loc_vars = function(self, info_queue, card)
 	type_tooltipmine(self, info_queue, card)
 	if next(SMODS.find_mod('Pokermon')) and card.ability.extra.ptype == "Plastic" and card.ability.extra.to_poison > 1 then
@@ -1958,7 +1962,7 @@ SMODS.Joker {
   eternal_compat = next(SMODS.find_mod('Pokermon')),
   perishable_compat = next(SMODS.find_mod('Pokermon')),
   blueprint_compat = true,
-  yes_pool_flag = next(SMODS.find_mod('Pokermon')),
+  yes_pool_flag = "remasterspokermoncompat",
   set_ability = function(self, card, initial, delay_sprites)
 		if pseudorandom('lobstacle') < (1 / 10) and next(SMODS.find_mod('Pokermon')) then
 			card.ability.extra.ptype = pseudorandom_element({"Grass", "Fire", "Water", "Lightning", "Fighting", "Dark", "Metal", "Colorless", "Fairy", "Dragon"})
@@ -2059,7 +2063,7 @@ SMODS.Joker {
   eternal_compat = next(SMODS.find_mod('Pokermon')),
   perishable_compat = next(SMODS.find_mod('Pokermon')),
   blueprint_compat = true,
-  yes_pool_flag = next(SMODS.find_mod('Pokermon')),
+  yes_pool_flag = "remasterspokermoncompat",
   set_ability = function(self, card, initial, delay_sprites)
 		if pseudorandom('lobstacle') < (1 / 10) and next(SMODS.find_mod('Pokermon')) then
 			card.ability.extra.ptype = pseudorandom_element({"Grass", "Fire", "Water", "Lightning", "Fighting", "Dark", "Metal", "Colorless", "Fairy", "Dragon"})
@@ -2227,6 +2231,462 @@ SMODS.Joker {
 		end
   end
 }
+end
+SMODS.Joker {
+    key = "burn_my_dread",
+    name = "Burn my Dread",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Burn my Dread",
+        text = {
+            "Create a copy of {C:tarot}#1#{}",
+			"when {C:attention}Blind{} is defeated,",
+			"#2#{C:tarot}#4#{C:red}#3#",
+			"{C:inactive}(must have room)"
+        }
+    },
+	config = {
+		current = 1,
+		tarot_cards = {
+			"The Fool",
+			"The Magician",
+			"The High Priestess",
+			"The Empress",
+			"The Emperor",
+			"The Hierophant",
+			"The Lovers",
+			"The Chariot",
+			"Strength",
+			"The Hermit",
+			"Wheel of Fortune",
+			"Justice",
+			"The Hanged Man",
+			"Death",
+			"The Universe"
+		}
+
+    },
+	loc_vars = function(self, info_queue, card)
+		if next(SMODS.find_mod('Bunco')) then
+				_tarot_keys = {"c_fool", "c_magician", "c_high_priestess", "c_empress", "c_emperor", "c_heirophant", "c_lovers", "c_chariot", "c_strength", "c_hermit", "c_wheel_of_fortune", "c_justice", "c_hanged_man", "c_death", "c_bunc_universe"}
+			else
+				_tarot_keys = {"c_fool", "c_magician", "c_high_priestess", "c_empress", "c_emperor", "c_heirophant", "c_lovers", "c_chariot", "c_strength", "c_hermit", "c_wheel_of_fortune", "c_justice", "c_hanged_man", "c_death", "c_Wzon_universe"}		
+			end
+		info_queue[#info_queue+1] =  --[[{key = _tarot_keys[card.ability.current], set = 'Tarot'}]] _tarot_keys[card.ability.current] and G.P_CENTERS[_tarot_keys[card.ability.current]] or nil
+		if card.ability.current >= 15 then
+			return {
+				vars = {card.ability.tarot_cards[card.ability.current],"", "self destructs", ""}
+			}
+		else
+			return {
+				vars = {card.ability.tarot_cards[card.ability.current], "then switch to the next ","","Tarot"}
+			}
+		end
+	end,
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 1,
+    pos = { x = 4, y = 4 },
+    cost = 6,
+    calculate = function(self, card, context)
+		if context.end_of_round and context.main_eval and not context.repetition and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			local _tarot_keys
+			if next(SMODS.find_mod('Bunco')) then
+				_tarot_keys = {"c_fool", "c_magician", "c_high_priestess", "c_empress", "c_emperor", "c_heirophant", "c_lovers", "c_chariot", "c_strength", "c_hermit", "c_wheel_of_fortune", "c_justice", "c_hanged_man", "c_death", "c_bunc_universe"}
+			else
+				_tarot_keys = {"c_fool", "c_magician", "c_high_priestess", "c_empress", "c_emperor", "c_heirophant", "c_lovers", "c_chariot", "c_strength", "c_hermit", "c_wheel_of_fortune", "c_justice", "c_hanged_man", "c_death", "c_Wzon_universe"}		
+			end
+			G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+				local _Tarot = create_card('Tarot', G.consumeables, nil, nil, nil, true, _tarot_keys[card.ability.current])
+				_Tarot:add_to_deck()
+				G.consumeables:emplace(_Tarot)
+				G.GAME.consumeable_buffer = 0
+				card.ability.current = card.ability.current + 1
+			return true end}))
+			if card.ability.current > 14 then
+				G.GAME.pool_flags.ironclad_bought = true
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+					card:start_dissolve()
+				return true end}))
+			else
+				return {
+					message = "Arcana Shift",
+					delay = 0.45, 
+					card = card
+				}
+			end
+		end
+	end
+}
+SMODS.Joker {
+    key = "aria_of_the_soul",
+    name = "Aria of the Soul",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Aria of the Soul",
+        text = {
+            "Destroy your first {C:attention}2{} consumables",
+			"at the end the of {C:attention}shop{} and gain {C:money}$#1#{},",
+			"Create a {C:tarot}Tarot{} card if the destroyed",
+			"cards were {C:tarot}Tarots{} between {C:attention}0{} and {C:attention}XX"
+        }
+    },
+	config = {
+		extra = {dollars = 4},
+		tarot_fusion = { --the fucking fusion spreadsheet from Persona 5
+    c_fool = {
+        c_fool = "c_fool", c_magician = "c_death", c_high_priestess = "c_moon", c_empress = "c_hanged_man", c_emperor = "c_temperance",
+        c_heirophant = "c_hermit", c_lovers = "c_chariot", c_chariot = "c_moon", c_justice = "c_star", c_hermit = "c_high_priestess",
+        c_wheel_of_fortune = "c_lovers", c_strength = "c_death", c_hanged_man = "c_tower", c_death = "c_strength", c_temperance = "c_heirophant",
+        c_devil = "c_temperance", c_tower = "c_empress", c_star = "c_magician", c_moon = "c_justice", c_sun = "c_justice", c_judgement = "c_sun"
+    },
+    c_magician = {
+        c_fool = "c_death", c_magician = "c_magician", c_high_priestess = "c_temperance", c_empress = "c_justice", c_emperor = "c_hanged_man",
+        c_heirophant = "c_death", c_lovers = "c_devil", c_chariot = "c_high_priestess", c_justice = "c_emperor", c_hermit = "c_lovers",
+        c_wheel_of_fortune = "c_justice", c_strength = "c_fool", c_hanged_man = "c_empress", c_death = "c_hermit", c_temperance = "c_chariot",
+        c_devil = "c_heirophant", c_tower = "c_temperance", c_star = "c_high_priestess", c_moon = "c_lovers", c_sun = "c_heirophant", c_judgement = "c_strength"
+    },
+    c_high_priestess = {
+        c_fool = "c_moon", c_magician = "c_temperance", c_high_priestess = "c_high_priestess", c_empress = "c_emperor", c_emperor = "c_empress",
+        c_heirophant = "c_magician", c_lovers = "c_wheel_of_fortune", c_chariot = "c_heirophant", c_justice = "c_death", c_hermit = "c_temperance",
+        c_wheel_of_fortune = "c_magician", c_strength = "c_devil", c_hanged_man = "c_death", c_death = "c_magician", c_temperance = "c_devil",
+        c_devil = "c_moon", c_tower = "c_hanged_man", c_star = "c_hermit", c_moon = "c_heirophant", c_sun = "c_chariot", c_judgement = "c_justice"
+    },
+    c_empress = {
+        c_fool = "c_hanged_man", c_magician = "c_justice", c_high_priestess = "c_emperor", c_empress = "c_empress", c_emperor = "c_justice",
+        c_heirophant = "c_fool", c_lovers = "c_judgement", c_chariot = "c_star", c_justice = "c_lovers", c_hermit = "c_strength",
+        c_wheel_of_fortune = "c_hermit", c_strength = "c_chariot", c_hanged_man = "c_high_priestess", c_death = "c_fool", c_temperance = "c_high_priestess",
+        c_devil = "c_sun", c_tower = "c_emperor", c_star = "c_lovers", c_moon = "c_wheel_of_fortune", c_sun = "c_tower", c_judgement = "c_emperor"
+    },
+    c_emperor = {
+        c_fool = "c_temperance", c_magician = "c_hanged_man", c_high_priestess = "c_empress", c_empress = "c_justice", c_emperor = "c_emperor",
+        c_heirophant = "c_wheel_of_fortune", c_lovers = "c_fool", c_chariot = "c_strength", c_justice = "c_chariot", c_hermit = "c_heirophant",
+        c_wheel_of_fortune = "c_sun", c_strength = "c_tower", c_hanged_man = "c_devil", c_death = "c_hermit", c_temperance = "c_devil",
+        c_devil = "c_justice", c_tower = "c_star", c_star = "c_lovers", c_moon = "c_tower", c_sun = "c_judgement", c_judgement = "c_high_priestess"
+    },
+    c_heirophant = {
+        c_fool = "c_hermit", c_magician = "c_death", c_high_priestess = "c_magician", c_empress = "c_fool", c_emperor = "c_wheel_of_fortune",
+        c_heirophant = "c_heirophant", c_lovers = "c_strength", c_chariot = "c_star", c_justice = "c_hanged_man", c_hermit = "c_wheel_of_fortune",
+        c_wheel_of_fortune = "c_justice", c_strength = "c_fool", c_hanged_man = "c_sun", c_death = "c_chariot", c_temperance = "c_death",
+        c_devil = "c_hanged_man", c_tower = "c_judgement", c_star = "c_tower", c_moon = "c_high_priestess", c_sun = "c_lovers", c_judgement = "c_empress"
+    },
+    c_lovers = {
+        c_fool = "c_chariot", c_magician = "c_devil", c_high_priestess = "c_wheel_of_fortune", c_empress = "c_judgement", c_emperor = "c_fool",
+        c_heirophant = "c_strength", c_lovers = "c_lovers", c_chariot = "c_temperance", c_justice = "c_judgement", c_hermit = "c_chariot",
+        c_wheel_of_fortune = "c_strength", c_strength = "c_death", c_hanged_man = "c_sun", c_death = "c_temperance", c_temperance = "c_strength",
+        c_devil = "c_moon", c_tower = "c_empress", c_star = "c_chariot", c_moon = "c_magician", c_sun = "c_empress", c_judgement = "c_hanged_man"
+    },
+    c_chariot = {
+        c_fool = "c_moon", c_magician = "c_high_priestess", c_high_priestess = "c_heirophant", c_empress = "c_star", c_emperor = "c_strength",
+        c_heirophant = "c_star", c_lovers = "c_temperance", c_chariot = "c_chariot", c_justice = "c_moon", c_hermit = "c_devil",
+        c_wheel_of_fortune = "c_high_priestess", c_strength = "c_hermit", c_hanged_man = "c_fool", c_death = "c_devil", c_temperance = "c_strength",
+        c_devil = "c_temperance", c_tower = "c_wheel_of_fortune", c_star = "c_moon", c_moon = "c_lovers", c_sun = "c_high_priestess", c_judgement = "c_heirophant"
+    },
+    c_justice = {
+        c_fool = "c_star", c_magician = "c_emperor", c_high_priestess = "c_death", c_empress = "c_lovers", c_emperor = "c_chariot",
+        c_heirophant = "c_hanged_man", c_lovers = "c_judgement", c_chariot = "c_moon", c_justice = "c_justice", c_hermit = "c_magician",
+        c_wheel_of_fortune = "c_emperor", c_strength = "c_heirophant", c_hanged_man = "c_lovers", c_death = "c_fool", c_temperance = "c_emperor",
+        c_devil = "c_fool", c_tower = "c_sun", c_star = "c_empress", c_moon = "c_devil", c_sun = "c_hanged_man", c_judgement = "c_tower"
+    },
+    c_hermit = {
+        c_fool = "c_high_priestess", c_magician = "c_lovers", c_high_priestess = "c_temperance", c_empress = "c_strength", c_emperor = "c_heirophant",
+        c_heirophant = "c_wheel_of_fortune", c_lovers = "c_chariot", c_chariot = "c_devil", c_justice = "c_magician", c_hermit = "c_hermit",
+        c_wheel_of_fortune = "c_star", c_strength = "c_heirophant", c_hanged_man = "c_star", c_death = "c_strength", c_temperance = "c_strength",
+        c_devil = "c_high_priestess", c_tower = "c_judgement", c_star = "c_strength", c_moon = "c_high_priestess", c_sun = "c_devil", c_judgement = "c_emperor"
+    },
+    c_wheel_of_fortune = {
+        c_fool = "c_lovers", c_magician = "c_justice", c_high_priestess = "c_magician", c_empress = "c_hermit", c_emperor = "c_sun",
+        c_heirophant = "c_justice", c_lovers = "c_strength", c_chariot = "c_high_priestess", c_justice = "c_emperor", c_hermit = "c_star",
+        c_wheel_of_fortune = "c_wheel_of_fortune", c_strength = "c_temperance", c_hanged_man = "c_emperor", c_death = "c_star", c_temperance = "c_empress",
+        c_devil = "c_heirophant", c_tower = "c_hanged_man", c_star = "c_devil", c_moon = "c_sun", c_sun = "c_star", c_judgement = "c_tower"
+    },
+    c_strength = {
+        c_fool = "c_death", c_magician = "c_fool", c_high_priestess = "c_devil", c_empress = "c_chariot", c_emperor = "c_tower",
+        c_heirophant = "c_fool", c_lovers = "c_death", c_chariot = "c_hermit", c_justice = "c_heirophant", c_hermit = "c_heirophant",
+        c_wheel_of_fortune = "c_temperance", c_strength = "c_strength", c_hanged_man = "c_temperance", c_death = "c_heirophant", c_temperance = "c_chariot",
+        c_devil = "c_death", c_tower = "c_chariot", c_star = "c_moon", c_moon = "c_magician", c_sun = "c_moon", c_judgement = "c_wheel_of_fortune"
+    },
+    c_hanged_man = {
+        c_fool = "c_tower", c_magician = "c_empress", c_high_priestess = "c_death", c_empress = "c_high_priestess", c_emperor = "c_devil",
+        c_heirophant = "c_sun", c_lovers = "c_sun", c_chariot = "c_fool", c_justice = "c_lovers", c_hermit = "c_star",
+        c_wheel_of_fortune = "c_emperor", c_strength = "c_temperance", c_hanged_man = "c_hanged_man", c_death = "c_moon", c_temperance = "c_death",
+        c_devil = "c_wheel_of_fortune", c_tower = "c_hermit", c_star = "c_justice", c_moon = "c_strength", c_sun = "c_heirophant", c_judgement = "c_star"
+    },
+    c_death = {
+        c_fool = "c_strength", c_magician = "c_hermit", c_high_priestess = "c_magician", c_empress = "c_fool", c_emperor = "c_hermit",
+        c_heirophant = "c_chariot", c_lovers = "c_temperance", c_chariot = "c_devil", c_justice = "c_fool", c_hermit = "c_strength",
+        c_wheel_of_fortune = "c_star", c_strength = "c_heirophant", c_hanged_man = "c_moon", c_death = "c_death", c_temperance = "c_hanged_man",
+        c_devil = "c_chariot", c_tower = "c_sun", c_star = "c_devil", c_moon = "c_heirophant", c_sun = "c_high_priestess", c_judgement = "c_magician"
+    },
+    c_temperance = {
+        c_fool = "c_heirophant", c_magician = "c_chariot", c_high_priestess = "c_devil", c_empress = "c_high_priestess", c_emperor = "c_devil",
+        c_heirophant = "c_death", c_lovers = "c_strength", c_chariot = "c_strength", c_justice = "c_emperor", c_hermit = "c_strength",
+        c_wheel_of_fortune = "c_empress", c_strength = "c_chariot", c_hanged_man = "c_death", c_death = "c_hanged_man", c_temperance = "c_temperance",
+        c_devil = "c_fool", c_tower = "c_wheel_of_fortune", c_star = "c_sun", c_moon = "c_wheel_of_fortune", c_sun = "c_magician", c_judgement = "c_hermit"
+    },
+    c_devil = {
+        c_fool = "c_temperance", c_magician = "c_heirophant", c_high_priestess = "c_moon", c_empress = "c_sun", c_emperor = "c_justice",
+        c_heirophant = "c_hanged_man", c_lovers = "c_moon", c_chariot = "c_temperance", c_justice = "c_fool", c_hermit = "c_high_priestess",
+        c_wheel_of_fortune = "c_heirophant", c_strength = "c_death", c_hanged_man = "c_wheel_of_fortune", c_death = "c_chariot", c_temperance = "c_fool",
+        c_devil = "c_devil", c_tower = "c_magician", c_star = "c_strength", c_moon = "c_chariot", c_sun = "c_hermit", c_judgement = "c_lovers"
+    },
+    c_tower = {
+        c_fool = "c_empress", c_magician = "c_temperance", c_high_priestess = "c_hanged_man", c_empress = "c_emperor", c_emperor = "c_star",
+        c_heirophant = "c_judgement", c_lovers = "c_empress", c_chariot = "c_wheel_of_fortune", c_justice = "c_sun", c_hermit = "c_judgement",
+        c_wheel_of_fortune = "c_hanged_man", c_strength = "c_chariot", c_hanged_man = "c_hermit", c_death = "c_sun", c_temperance = "c_wheel_of_fortune",
+        c_devil = "c_magician", c_tower = "c_tower", c_star = "c_death", c_moon = "c_hermit", c_sun = "c_emperor", c_judgement = "c_moon"
+    },
+    c_star = {
+        c_fool = "c_magician", c_magician = "c_high_priestess", c_high_priestess = "c_hermit", c_empress = "c_lovers", c_emperor = "c_lovers",
+        c_heirophant = "c_tower", c_lovers = "c_chariot", c_chariot = "c_moon", c_justice = "c_empress", c_hermit = "c_strength",
+        c_wheel_of_fortune = "c_devil", c_strength = "c_moon", c_hanged_man = "c_justice", c_death = "c_devil", c_temperance = "c_sun",
+        c_devil = "c_strength", c_tower = "c_death", c_star = "c_star", c_moon = "c_temperance", c_sun = "c_judgement", c_judgement = "c_wheel_of_fortune"
+    },
+    c_moon = {
+        c_fool = "c_justice", c_magician = "c_lovers", c_high_priestess = "c_heirophant", c_empress = "c_wheel_of_fortune", c_emperor = "c_tower",
+        c_heirophant = "c_high_priestess", c_lovers = "c_magician", c_chariot = "c_lovers", c_justice = "c_devil", c_hermit = "c_high_priestess",
+        c_wheel_of_fortune = "c_sun", c_strength = "c_magician", c_hanged_man = "c_strength", c_death = "c_heirophant", c_temperance = "c_wheel_of_fortune",
+        c_devil = "c_chariot", c_tower = "c_hermit", c_star = "c_temperance", c_moon = "c_moon", c_sun = "c_empress", c_judgement = "c_fool"
+    },
+    c_sun = {
+        c_fool = "c_justice", c_magician = "c_heirophant", c_high_priestess = "c_chariot", c_empress = "c_tower", c_emperor = "c_judgement",
+        c_heirophant = "c_lovers", c_lovers = "c_empress", c_chariot = "c_high_priestess", c_justice = "c_hanged_man", c_hermit = "c_devil",
+        c_wheel_of_fortune = "c_star", c_strength = "c_moon", c_hanged_man = "c_heirophant", c_death = "c_high_priestess", c_temperance = "c_magician",
+        c_devil = "c_hermit", c_tower = "c_emperor", c_star = "c_judgement", c_moon = "c_empress", c_sun = "c_sun", c_judgement = "c_death"
+    },
+    c_judgement = {
+        c_fool = "c_sun", c_magician = "c_strength", c_high_priestess = "c_justice", c_empress = "c_emperor", c_emperor = "c_high_priestess",
+        c_heirophant = "c_empress", c_lovers = "c_hanged_man", c_chariot = "c_heirophant", c_justice = "c_tower", c_hermit = "c_emperor",
+        c_wheel_of_fortune = "c_tower", c_strength = "c_wheel_of_fortune", c_hanged_man = "c_star", c_death = "c_magician", c_temperance = "c_hermit",
+        c_devil = "c_lovers", c_tower = "c_moon", c_star = "c_wheel_of_fortune", c_moon = "c_fool", c_sun = "c_death", c_judgement = "c_judgement"
+    }
+}
+    },
+	loc_vars = function(self, info_queue, card)
+		return {
+				vars = {card.ability.extra.dollars}
+			}
+	end,
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 1,
+    pos = { x = 0, y = 5 },
+    cost = 6,
+    calculate = function(self, card, context)
+    if context.ending_shop then
+        local _cons1
+        local _cons2
+        G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.2,func = function()
+            if #G.consumeables.cards + (G.GAME.consumeable_buffer or 0) >= 2 then
+				card:juice_up()
+                _cons1 = G.consumeables.cards[1].config.center.key
+                _cons2 = G.consumeables.cards[2].config.center.key
+                G.consumeables.cards[2]:start_dissolve()
+                G.consumeables.cards[1]:start_dissolve()
+                if _cons1 == "c_bunc_adjustment" then
+                    _cons1 = "c_strength"
+                end
+                if _cons2 == "c_bunc_adjustment" then
+                    _cons2 = "c_strength"
+                end
+                if _cons1 == "c_bunc_art" then
+                    _cons1 = "c_temperance"
+                end
+                if _cons2 == "c_bunc_art" then
+                    _cons2 = "c_temperance"
+                end
+                if _cons1 == "c_bunc_lust" then
+                    _cons1 = "c_justice"
+                end
+                if _cons2 == "c_bunc_lust" then
+                    _cons2 = "c_justice"
+                end
+                if (card.ability.tarot_fusion[_cons1] and card.ability.tarot_fusion[_cons1][_cons2] or nil) then
+                    local _Tarot = create_card('Tarot', G.consumeables, nil, nil, nil, true, (card.ability.tarot_fusion[_cons1] and card.ability.tarot_fusion[_cons1][_cons2] or nil))
+                    _Tarot:add_to_deck()
+                    G.consumeables:emplace(_Tarot)
+                    G.GAME.consumeable_buffer = 0
+                elseif (card.ability.tarot_fusion[_cons2] and card.ability.tarot_fusion[_cons2][_cons1] or nil) then
+                    local _Tarot = create_card('Tarot', G.consumeables, nil, nil, nil, true, (card.ability.tarot_fusion[_cons2] and card.ability.tarot_fusion[_cons2][_cons1] or nil))
+                    _Tarot:add_to_deck()
+                    G.consumeables:emplace(_Tarot)
+                    G.GAME.consumeable_buffer = 0
+                end
+				SMODS.calculate_effect({
+					dollars = card.ability.extra.dollars,
+				}, context.blueprint_card or card)
+            end
+            return true
+        end }))
+    end
+end
+}
+SMODS.Joker {
+    key = "planeswalker",
+    name = "Planeswalker",
+    atlas = 'planeswalker',
+    loc_txt = {
+        name = "Planeswalker",
+        text = {
+            "Has {C:attention}3 different effects{} based",
+			"on position, {C:red}self-destructs",
+			"if {C:attention}loyalty{} reaches {C:attention}0",
+			"{C:inactive}(currently {C:attention}#1#{C:inactive} loyalty)"
+        }
+    },
+	config = {
+		extra = {loyalty = 3, increase = 2, decrease = 9, how_many = 2},
+		},
+	loc_vars = function(self, info_queue, card)
+		local _chosen = "none"
+		if G.jokers then
+			for i = 1, #G.jokers.cards do
+				if G.jokers.cards[i] == card then
+					if #G.jokers.cards >= 3 then
+						if i > 2 * #G.jokers.cards / 3 then
+							_chosen = "planeswalkerright"
+						elseif i <= #G.jokers.cards / 3 then
+							_chosen = "planeswalkerleft"
+						else
+							_chosen = "planeswalkermid"
+					end
+    			elseif #G.jokers.cards == 2 then
+    			    _chosen = i == 1 and "planeswalkerleft" or "planeswalkermid"
+    			elseif #G.jokers.cards == 1 then
+     			   _chosen = "planeswalkerleft"
+    			end
+			end
+		end
+	end
+		if _chosen == "none" then
+			_chosen = "planeswalkeroriginal"
+			info_queue[#info_queue+1] = { set = 'Other', key = 'planeswalkerleft', specific_vars = {card.ability.extra.increase} }
+			info_queue[#info_queue+1] = { set = 'Other', key = 'planeswalkermid'}
+			info_queue[#info_queue+1] = { set = 'Other', key = 'planeswalkerright', specific_vars = {card.ability.extra.decrease,card.ability.extra.how_many} }
+		end
+		return {vars = {card.ability.extra.loyalty,card.ability.extra.increase,card.ability.extra.decrease,card.ability.extra.how_many},
+				key = _chosen, set = 'Joker',}
+	end,
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = false,
+    rarity = 2,
+    pos = { x = 0, y = 0 },
+	soul_pos = { x = -1, y = -1, extra = { x = 0, y = 4 }},
+    cost = 6,
+	update = function(self, card)
+		local _loyaltydisplay_
+			if card.ability.extra.loyalty <= 9 then
+				_loyaltydisplay_ = card.ability.extra.loyalty
+			else
+				_loyaltydisplay_ = 10
+			end
+		card.children.floating_sprite2:set_sprite_pos({  x = 0, y = _loyaltydisplay_ + 1 })
+	end,
+    calculate = function(self, card, context)
+    if context.blueprint then return end
+    if context.setting_blind then
+        for i = 1, #G.jokers.cards do
+            if G.jokers.cards[i] == card then
+                if i > 2 * #G.jokers.cards / 3 and #G.jokers.cards >= 3 then
+                    if card.ability.extra.loyalty >= card.ability.extra.decrease then
+                        card.ability.extra.loyalty = card.ability.extra.loyalty - card.ability.extra.decrease
+                        local _wtfthekingwow
+                        local _suit
+                        
+                        for j = 1, card.ability.extra.how_many do
+                            _suit = pseudorandom_element({'S', 'H', 'D', 'C'}, pseudoseed('planeswalker'))
+                            _wtfthekingwow = create_playing_card({front = G.P_CARDS[_suit..'_'.."K"], center = nil}, G.hand)
+                            _wtfthekingwow:set_edition("e_polychrome", true)
+                            _wtfthekingwow:set_seal("Red", true)
+                            _wtfthekingwow:set_ability(G.P_CENTERS.m_steel, nil, true)
+                        end
+
+                        if card.ability.extra.loyalty <= 0 then
+                            card:start_dissolve()
+                            return
+                        end
+
+                        return {
+                            message = "-"..card.ability.extra.decrease.." loyalty",
+                        }
+                    else
+                        return
+                    end
+                elseif (i <= #G.jokers.cards / 3 and #G.jokers.cards >= 3) or (#G.jokers.cards < 3 and i == 1) then
+                    card.ability.extra.loyalty = card.ability.extra.loyalty + card.ability.extra.increase
+                    
+                    if #G.jokers.cards + G.GAME.joker_buffer < G.jokers.config.card_limit then
+                        local new_card = create_card('Joker', G.jokers, nil, 0, nil, nil, nil, 'planeswalker')
+                        new_card:add_to_deck()
+                        G.jokers:emplace(new_card)
+                        new_card:start_materialize()
+                        G.GAME.joker_buffer = 0
+                    end
+                    
+                    return {
+                        message = "+"..card.ability.extra.increase.." loyalty",
+                    }
+                elseif (i > #G.jokers.cards / 3 and #G.jokers.cards >= 3) or (#G.jokers.cards < 3) then
+                    ease_hands_played(1)
+                    return {
+                        message = "+0 loyalty",
+                    }
+                end
+            end
+        end
+    end
+end
+
+}
+
+if not next(SMODS.find_mod('Bunco')) then
+	SMODS.Consumable{
+		set = 'Tarot',
+		atlas = 'tarots',
+		key = 'universe',
+		loc_txt = {
+			name = "The Universe",
+			text = {
+				"{C:attention}Instantly wins{} the current",
+				"{C:attention}Blind{}, destroys all consumables,",
+				"permanently sets hands to {C:blue}1",
+			}
+		},
+		pos = { x = 0, y = 0 },
+		yes_pool_flag = 'universenyx',
+		can_use = function(self, card)
+			if G.GAME.blind.in_blind then
+				return true
+			end
+		end,    
+		use = function(self, card)
+			G.GAME.round_resets.hands = 1
+			G.E_MANAGER:add_event(Event({
+        blocking = false,
+        func = function()
+			for i = 1, #G.consumeables.cards do
+				G.consumeables.cards[i]:start_dissolve()
+			end
+            if G.STATE == G.STATES.SELECTING_HAND then
+                G.GAME.chips = G.GAME.blind.chips
+                G.STATE = G.STATES.HAND_PLAYED
+                G.STATE_COMPLETE = true
+                end_round()
+                return true
+            end
+        end
+    }))
+		end
+	}
 end
 
 SMODS.ConsumableType {
@@ -2543,6 +3003,7 @@ use = function(self, card)
 end
 }
 if next(SMODS.find_mod('Pokermon')) then      --Pokermon compat stuff
+G.GAME.pool_flags.remasterspokermoncompat = true
 SMODS.Consumable{
   name = "plastic_energy",
   key = "plastic_energy",
@@ -3343,6 +3804,42 @@ SMODS.DrawStep({
 })
 SMODS.draw_ignore_keys.floating_sprite4 = true
 
+local old_create_UIBox_customize_deck = create_UIBox_customize_deck
+
+function create_UIBox_customize_deck(...)
+  local suitTabs = {}
+  local index = 1
+
+  for suitKey, _ in pairs(SMODS.Suits) do
+    if suitKey ~= "Wzon_Joker" then
+      suitTabs[index] = {
+        label = localize(suitKey, 'suits_plural'),
+        tab_definition_function = G.UIDEF.custom_deck_tab,
+        tab_definition_function_args = suitKey
+      }
+      index = index + 1
+    else
+      print("Skipping suitKey: " .. suitKey)
+    end
+  end
+
+  if #suitTabs > 0 then
+    suitTabs[1].chosen = true
+  end
+
+  local t = create_UIBox_generic_options({ back_func = 'options', snap_back = nil, contents = {
+    {n = G.UIT.R, config = {align = "cm", padding = 0}, nodes = {
+      create_tabs(
+        {tabs = suitTabs, snap_to_nav = true, no_shoulders = true}
+      )
+    }}
+  }})
+
+  return t
+end
+
+
+
 G.localization.descriptions.Other["masquerade_reminder"] = {
         name = "Masquerade the Blazing Dragon", --tooltip name
        text = {
@@ -3483,7 +3980,7 @@ G.localization.descriptions.Joker['suggestion'] =  {
     }
 G.localization.descriptions.Joker['endurance'] =  {
         name = 'Endurance',
-        text = {"Gains {C:chips}+1{} hand when hand is",
+        text = {"Permanently gain {C:chips}+1{} hand when hand is",
 			"played if Dice Score is {C:green}30 or",
 			"{C:green}more{}, gains {C:green}+2{} permanent",
 			" Dice Score otherwise"
@@ -3491,7 +3988,7 @@ G.localization.descriptions.Joker['endurance'] =  {
     }
 G.localization.descriptions.Joker['painthreshold'] =  {
         name = 'Pain Threshold',
-        text = {"Gains {C:mult}+1{} discard when hand is",
+        text = {"Permanently gain {C:mult}+1{} discard when hand is",
 			"played if Dice Score is {C:green}18 or",
 			"{C:green}more{}, gains {C:green}+1{} permanent",
 			" Dice Score otherwise"
@@ -3528,7 +4025,7 @@ G.localization.descriptions.Joker['halflight'] =  {
     }
 G.localization.descriptions.Joker['handeye'] =  {
         name = 'Hand/Eye Coordination',
-        text = {"Gains {C:attention}+1{} hand size when hand is",
+        text = {"Permanently gain {C:attention}+1{} hand size when hand is",
 			"played if Dice Score is {C:green}20 or",
 			"{C:green}more{}, gains {C:green}+1{} permanent",
 			" Dice Score otherwise"
@@ -3536,7 +4033,7 @@ G.localization.descriptions.Joker['handeye'] =  {
     }
 G.localization.descriptions.Joker['perception'] =  {
         name = 'Perception',
-        text = {"Fills consumable slots with copies of \"{C:tarot}The World (XXI){}\"",
+        text = {"Fills consumable slots with copies of \"{C:tarot}The World{}\"",
 			"when hand is played if Dice Score is {C:green}4 or {C:green}more{},",
 			"gains {C:green}+3{} permanent Dice Score otherwise"
 			},
@@ -3575,6 +4072,59 @@ G.localization.descriptions.Other['Plastic'] =  {
                 text = {
                   "{X:mult,C:white}Plastic{}",
                 },
+    }
+G.localization.descriptions.Joker['planeswalkerleft'] =  {
+        name = 'Planeswalker',
+        text = {"When {C:attention}Blind{} is selected,",
+				"create {C:attention}1 {C:blue}Common {C:attention}Joker",
+				"and gain {C:attention}#2#{} loyalty",
+				"{C:inactive}(must have room, {C:attention}#1#{C:inactive} loyalty)"
+			},
+    }
+G.localization.descriptions.Joker['planeswalkermid'] =  {
+        name = 'Planeswalker',
+        text = {"When {C:attention}Blind{} is selected,",
+				"gain {C:blue}+1{} hands",
+				"{C:inactive}({C:attention}#1#{C:inactive} loyalty)"
+			},
+    }
+G.localization.descriptions.Joker['planeswalkerright'] =  {
+        name = 'Planeswalker',
+        text = {"When {C:attention}Blind{} is selected,",
+				"lose {C:attention}#3#{} loyalty and create {C:attention}#4#",
+				"{C:dark_edition}Polychrome{}, {C:red}Red Seal{}, {C:attention}Steel Kings",
+				"{C:inactive}({C:attention}#1#{C:inactive} loyalty)"
+			},
+    }
+G.localization.descriptions.Joker['planeswalkeroriginal'] =  {
+        name = "Planeswalker",
+        text = {
+            "Has {C:attention}3 different effects{} based",
+			"on position, {C:red}self-destructs",
+			"if {C:attention}loyalty{} reaches {C:attention}0",
+			"{C:inactive}(currently {C:attention}#1#{C:inactive} loyalty)"
+        },
+    }
+G.localization.descriptions.Other['planeswalkerleft'] =  {
+        name = 'Left',
+        text = {"When {C:attention}Blind{} is selected,",
+				"create {C:attention}1 {C:blue}Common {C:attention}Joker",
+				"and gain {C:attention}#1#{} loyalty",
+				"{C:inactive}(must have room)"
+			},
+    }
+G.localization.descriptions.Other['planeswalkermid'] =  {
+        name = 'Middle',
+        text = {"When {C:attention}Blind{} is selected,",
+				"gain {C:blue}+1{} hands",
+			},
+    }
+G.localization.descriptions.Other['planeswalkerright'] =  {
+        name = 'Right',
+        text = {"When {C:attention}Blind{} is selected,",
+				"lose {C:attention}#1#{} loyalty and create {C:attention}#2#",
+				"{C:dark_edition}Polychrome{}, {C:red}Red Seal{}, {C:attention}Steel Kings",
+			},
     }
 
 SMODS.current_mod.extra_tabs = function()
