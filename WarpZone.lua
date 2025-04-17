@@ -1189,7 +1189,7 @@ SMODS.Joker {
     blueprint_compat = false,
     rarity = 3,
     pos = { x = 0, y = 3 },
-    cost = 6,
+    cost = 8,
 	calculate = function(self, card, context)
 		if context.blueprint then return end
 		if (context.first_hand_drawn or context.open_booster) and card.ability.loyalty_remaining >= 2 then
@@ -1558,7 +1558,7 @@ SMODS.Joker {
 		end,
 	calculate = function(self, card, context)
 		if context.blueprint then return end
-		if context.first_hand_drawn then
+		if context.setting_blind then
 			play_sound("card1")
 			card:flip()
 			local _lleg
@@ -1567,9 +1567,6 @@ SMODS.Joker {
 			local _rarm
 			local _head
 			local _cards = {}
-			for i = 1, #G.hand.cards do
-				draw_card(G.hand, G.deck, nil, nil, nil, G.hand.cards[i])
-			end
 				_lleg = create_playing_card({front = G.P_CARDS["H"..'_'.."Wzon_Fo"], center = nil}, G.hand)
 				_lleg.ability.perma_x_mult = 3
 				_larm = create_playing_card({front = G.P_CARDS["S"..'_'.."Wzon_Fo"], center = nil}, G.hand)
@@ -1791,7 +1788,7 @@ SMODS.Joker {
     eternal_compat = true,
     perishable_compat = true,
     blueprint_compat = true,
-    rarity = 3,
+    rarity = 2,
     config = {
         xmult = 1.5,
     },
@@ -2344,7 +2341,7 @@ SMODS.Joker {
         }
     },
 	config = {
-		extra = {dollars = 4},
+		extra = {dollars = 6},
 		tarot_fusion = { --the fucking fusion spreadsheet from Persona 5
     c_fool = {
         c_fool = "c_fool", c_magician = "c_death", c_high_priestess = "c_moon", c_empress = "c_hanged_man", c_emperor = "c_temperance",
