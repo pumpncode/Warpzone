@@ -3012,7 +3012,13 @@ use = function(self, card)
 end
 }
 if next(SMODS.find_mod('Pokermon')) then      --Pokermon compat stuff
-G.GAME.pool_flags.remasterspokermoncompat = true
+local igomine = Game.init_game_object
+function Game:init_game_object()
+	local ret = igomine(self)
+	ret.pool_flags.remasterspokermoncompat = true
+	return ret
+end
+
 SMODS.Consumable{
   name = "plastic_energy",
   key = "plastic_energy",
