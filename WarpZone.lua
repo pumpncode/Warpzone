@@ -1138,9 +1138,15 @@ SMODS.Joker {
         name = "Joker's Horn",
         text = {
             "Last played card gives",
-			"{X:chips,C:white}X2{} Chips when scored",
+			"{X:chips,C:white}X#1#{} Chips when scored",
         }
     },
+	config = {extra = {xchips = 2}},
+	loc_vars = function(self, info_queue, card)
+		return {
+            vars = {card.ability.extra.xchips}
+        }
+	end,
 	pixel_size = { w = 50, h = 93},
     unlocked = true,
     discovered = true,
@@ -1154,7 +1160,7 @@ SMODS.Joker {
     if context.individual and context.cardarea == G.play then
         if context.other_card == context.scoring_hand[#context.scoring_hand] then
 			return {
-				xchips = 2,
+				xchips = card.ability.extra.xchips,
 				card = card
 				}
 			end
@@ -2653,6 +2659,316 @@ SMODS.Joker {
 end
 
 }
+SMODS.Joker {
+    key = "stonemask",
+    name = "Stone Mask",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Stone Mask",
+        text = {
+            "you're not supposed to read this", 
+        },
+    },
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 2,
+    config = {
+        howmany = 15,
+		currently = 0,
+		randomflagineedbecauseotherwisethingsgobad = 0
+    },
+    loc_vars = function(self, info_queue, card)
+		local _chosen
+		if next(SMODS.find_card('j_vampire')) then
+			_chosen = "stonemaskvampire"
+		else
+			_chosen = "stonemasknovampire"
+			info_queue[#info_queue+1] = "j_vampire" and G.P_CENTERS.j_vampire or nil
+		end
+        return {
+            vars = {card.ability.howmany,card.ability.currently},
+			key = _chosen, set = 'Joker',
+        }
+    end,
+    pos = { x = 1, y = 5 },
+    cost = 5,
+    calculate = function(self, card, context)
+		if next(SMODS.find_card('j_vampire')) then
+			if context.before and context.cardarea == G.jokers and not (context.individual or context.repetition) then
+				local _truth = 0
+				for i = 1, #context.scoring_hand do
+					if context.scoring_hand[i]:is_suit("Hearts") and context.scoring_hand[i].ability.set ~= "Enhanced" then
+						context.scoring_hand[i]:juice_up()
+						context.scoring_hand[i]:set_ability(G.P_CENTERS[SMODS.poll_enhancement({guaranteed = true})])
+						_truth = 1
+					end
+				end
+				if _truth == 1 then
+					return {
+					message = "Enhanced",
+					card = card
+					}
+				end
+			end
+		elseif context.individual and context.cardarea == G.play then
+			if context.other_card:is_suit("Hearts") then
+				card.ability.currently = card.ability.currently + 1
+				if card.ability.currently < card.ability.howmany then
+					return {
+					message = tostring(card.ability.currently)  ..  "/" .. tostring(card.ability.howmany),
+					card = card
+					}
+				elseif card.ability.randomflagineedbecauseotherwisethingsgobad == 0 then
+					card.ability.randomflagineedbecauseotherwisethingsgobad = 1
+					G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+					card:start_dissolve()
+					local __vampire = create_card("Joker", G.jokers, nil, nil, nil, nil, "j_vampire")
+					__vampire:add_to_deck()
+					G.jokers:emplace(__vampire)
+					return true end }))
+				end
+			end
+		end
+	end
+}
+SMODS.Joker {
+    key = "loan",
+    name = "Loan",
+    atlas = 'Wzone',
+    loc_txt = {
+        name = "Loan",
+        text = {
+			"{C:chips}-#1#{} Chips per card",
+			"in played hand",
+            "First played card gives",
+			"{C:chips}+#2#{} Chips when scored",
+        }
+		,boxes = {2,2}
+    },
+	config = {extra = {chips = 40}},
+	loc_vars = function(self, info_queue, card)
+		return {
+            vars = {card.ability.extra.chips,card.ability.extra.chips * 5}
+        }
+	end,
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 1,
+    pos = { x = 2, y = 5 },
+    cost = 3,
+    calculate = function(self, card, context)
+		if context.joker_main then
+			return {
+			chips = -(card.ability.extra.chips * #context.full_hand),
+			card = card
+			}
+		end
+		if context.individual and context.cardarea == G.play then
+			if context.other_card == context.scoring_hand[1] then
+				return {
+				chips = card.ability.extra.chips * 5,
+				card = card
+				}
+			end
+		end
+	end 
+}
+SMODS.Joker {
+    key = "bluestorm",
+    name = "Bluestorm",
+    atlas = 'Wzone',
+    unlocked = true,
+    discovered = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    blueprint_compat = true,
+    rarity = 2,
+    config = {
+        howmany = 6,
+		currently = 0,
+		double = false,
+    },
+    pos = { x = 3, y = 5 },
+    cost = 10,
+	update = function(self, card, front)
+		card.ability.brainstorm_compat = "nothing"
+		card.ability.blueprint_compat = "nothing"
+		if G.jokers then
+		for i = 1, #G.jokers.cards do
+				if G.jokers.cards[1] == card and next(SMODS.find_card('j_brainstorm')) then
+					if G.jokers.cards[2] and G.jokers.cards[2] ~= card and G.jokers.cards[2].config.center.blueprint_compat then
+						card.ability.blueprint_compat = true
+					else
+						card.ability.blueprint_compat = false
+					end
+				end
+
+				if G.jokers.cards[i] == card and i > 1 and G.jokers.cards[i - 1].config.center_key == 'j_blueprint' then
+					if G.jokers.cards[1] and G.jokers.cards[1] ~= card and G.jokers.cards[1].config.center.blueprint_compat then
+						card.ability.brainstorm_compat = true
+					else
+						card.ability.brainstorm_compat = false
+					end
+				end
+				if G.jokers.cards[i] == card and i ~= 1 then
+					local _broken = false
+					for j = 1, i do
+						if G.jokers.cards[j].config.center_key ~= 'j_blueprint' and G.jokers.cards[j] ~= card then
+						_broken = true
+						break
+						end
+					end
+        
+					if _broken == false and next(SMODS.find_card('j_brainstorm')) then
+						if G.jokers.cards[1] and G.jokers.cards[1] ~= card and G.jokers.cards[1].config.center.blueprint_compat then
+							card.ability.brainstorm_compat = true
+						else
+							card.ability.brainstorm_compat = false
+						end
+						if G.jokers.cards[i+1] and G.jokers.cards[i+1] ~= card and G.jokers.cards[i+1].config.center.blueprint_compat then
+							card.ability.blueprint_compat = true
+						else
+							card.ability.blueprint_compat = false
+						end
+						break
+					end
+				end
+				if (G.jokers.cards[1] == card and G.jokers.cards[i].config.center_key == 'j_brainstorm' and G.jokers.cards[i - 1] and G.jokers.cards[i - 1].config.center_key == 'j_blueprint') then
+					card.ability.brainstorm_compat = true
+					if G.jokers.cards[i+1] and G.jokers.cards[i+1] ~= card and G.jokers.cards[i+1].config.center.blueprint_compat then
+						card.ability.blueprint_compat = true
+					else
+						card.ability.blueprint_compat = false
+					end
+					break
+				end
+			end
+		end
+	end,
+    calculate = function(self, card, context)
+		if next(SMODS.find_card('j_blueprint')) or next(SMODS.find_card('j_brainstorm')) then
+			local blueprinted_joker = nil
+			local brainstormed_joker = nil
+			local copied_joker
+			local maybe_double = false
+			for i = 1, #G.jokers.cards do
+				if G.jokers.cards[1] == card and next(SMODS.find_card('j_brainstorm')) then
+					blueprinted_joker = G.jokers.cards[2]
+					brainstormed_joker = nil
+				end
+
+				if G.jokers.cards[i] == card and i > 1 and G.jokers.cards[i - 1].config.center_key == 'j_blueprint' then
+					brainstormed_joker = G.jokers.cards[1]
+					blueprinted_joker = nil
+				end
+				if G.jokers.cards[i] == card and i ~= 1 then
+					local _broken = false
+					for j = 1, i do
+						if G.jokers.cards[j].config.center_key ~= 'j_blueprint' and G.jokers.cards[j] ~= card then
+						_broken = true
+						break
+						end
+					end
+        
+					if _broken == false and next(SMODS.find_card('j_brainstorm')) then
+						blueprinted_joker = G.jokers.cards[i + 1] or nil
+						brainstormed_joker = G.jokers.cards[i + 1] or nil
+						break
+					end
+				end
+				if (G.jokers.cards[1] == card and G.jokers.cards[i].config.center_key == 'j_brainstorm' and G.jokers.cards[i - 1] and G.jokers.cards[i - 1].config.center_key == 'j_blueprint') then
+					blueprinted_joker = G.jokers.cards[2]
+					brainstormed_joker = G.jokers.cards[2]
+					break
+				end
+			end
+
+			if blueprinted_joker and brainstormed_joker then
+				copied_joker = brainstormed_joker
+				maybe_double = true
+			elseif blueprinted_joker then
+				copied_joker = blueprinted_joker
+			elseif brainstormed_joker then
+				copied_joker = brainstormed_joker
+			end
+			if copied_joker and copied_joker ~= card then
+				if maybe_double == true then
+					SMODS.calculate_effect(SMODS.blueprint_effect(card, copied_joker, context)or{}, context.blueprint_card or card)
+					return SMODS.blueprint_effect(card, copied_joker, context)
+				else
+					return SMODS.blueprint_effect(card, copied_joker, context)
+				end
+			end
+		else
+			if context.end_of_round and context.main_eval and not context.repetition and not context.blueprint then
+				if card.ability.currently >= card.ability.howmany - 1 then
+					card.ability.currently = card.ability.currently + 1
+					local eval = function(card) return not card.REMOVED and not(next(SMODS.find_card('j_blueprint')) or next(SMODS.find_card('j_brainstorm'))) end
+					juice_card_until(card, eval, true)
+				end
+				if card.ability.currently < card.ability.howmany then
+				card.ability.currently = card.ability.currently + 1
+					return {
+					message = tostring(card.ability.currently)  ..  "/" .. tostring(card.ability.howmany),
+					}
+				end
+			end
+			if context.selling_self and card.ability.currently >= card.ability.howmany and not context.blueprint then
+				local _who_ = pseudorandom_element({'j_blueprint','j_brainstorm'})
+				local __ship = create_card("Joker", G.jokers, nil, nil, nil, nil, _who_)
+				__ship:add_to_deck()
+				G.jokers:emplace(__ship)
+			end
+		end
+	end,
+	generate_ui = function(self, info_queue, card, desc_nodes, specific_vars, full_UI_table)
+	local _whatbluestorm
+	if next(SMODS.find_card('j_blueprint')) or next(SMODS.find_card('j_brainstorm')) then
+		_whatbluestorm = "bluestormcopier"
+	else
+		_whatbluestorm = "bluestormlonely"
+	end
+	full_UI_table.name = localize{type = 'name', key = _whatbluestorm, set = "Other", name_nodes = {}, vars = specific_vars or {}}
+	localize{type = 'descriptions', key = _whatbluestorm,  set = "Other", nodes = desc_nodes, vars = {card.ability.howmany,card.ability.currently}}
+	info_queue[#info_queue+1] = "j_blueprint" and G.P_CENTERS.j_blueprint or nil
+	info_queue[#info_queue+1] = "j_brainstorm" and G.P_CENTERS.j_brainstorm or nil
+	if next(SMODS.find_card('j_blueprint')) or next(SMODS.find_card('j_brainstorm')) then
+        SMODS.Center.generate_ui(self, info_queue, card, desc_nodes, specific_vars, full_UI_table)
+        if card.area and card.area == G.jokers then
+			if card.ability.blueprint_compat ~= "nothing" then
+            desc_nodes[#desc_nodes+1] = {
+                {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
+                    {n=G.UIT.C, config={align = "cm", colour = G.C.CLEAR}, nodes={
+                        {n=G.UIT.T, config={text = 'Joker to the right ',colour = G.C.UI.TEXT_INACTIVE, scale = 0.32*0.8}},
+                    }},
+                    {n=G.UIT.C, config={ref_table = self, align = "m", colour = card.ability.blueprint_compat and mix_colours(G.C.GREEN, G.C.JOKER_GREY, 0.8) or mix_colours(G.C.RED, G.C.JOKER_GREY, 0.8), r = 0.05, padding = 0.06}, nodes={
+                        {n=G.UIT.T, config={text = ' '..localize(card.ability.blueprint_compat and 'k_compatible' or 'k_incompatible')..' ',colour = G.C.UI.TEXT_LIGHT, scale = 0.32*0.8}},
+                    }}
+                }}
+            }
+			end
+			if card.ability.brainstorm_compat ~= "nothing" then
+            desc_nodes[#desc_nodes+1] = {
+                {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
+                    {n=G.UIT.C, config={align = "cm", colour = G.C.CLEAR}, nodes={
+                        {n=G.UIT.T, config={text = 'leftmost Joker ',colour = G.C.UI.TEXT_INACTIVE, scale = 0.32*0.8}},
+                    }},
+                    {n=G.UIT.C, config={ref_table = self, align = "m", colour = card.ability.brainstorm_compat and mix_colours(G.C.GREEN, G.C.JOKER_GREY, 0.8) or mix_colours(G.C.RED, G.C.JOKER_GREY, 0.8), r = 0.05, padding = 0.06}, nodes={
+                        {n=G.UIT.T, config={text = ' '..localize(card.ability.brainstorm_compat and 'k_compatible' or 'k_incompatible')..' ',colour = G.C.UI.TEXT_LIGHT, scale = 0.32*0.8}},
+                    }}
+                }}
+            }
+			end
+        end
+    end
+end
+}
 
 if not next(SMODS.find_mod('Bunco')) then
 	SMODS.Consumable{
@@ -4137,6 +4453,42 @@ G.localization.descriptions.Other['planeswalkerright'] =  {
 				"lose {C:attention}#1#{} loyalty and create {C:attention}#2#",
 				"{C:dark_edition}Polychrome{}, {C:red}Red Seal{}, {C:attention}Steel Kings",
 			},
+    }
+G.localization.descriptions.Joker['stonemasknovampire'] =  {
+        name = "Stone Mask",
+        text = {
+            "Create a {C:attention}Vampire{} after {C:attention}#1#{}",
+			"cards with {C:hearts}Heart{} suit are",
+			"scored, {C:red}self destructs{}",
+			"{C:inactive}(Currently {C:attention}#2#{C:inactive}/#1#)",
+			"{C:inactive,s:0.8}(Different effect if you own {C:attention,s:0.8}Vampire{C:inactive,s:0.8})"
+        },
+    }
+G.localization.descriptions.Joker['stonemaskvampire'] =  {
+        name = "Stone Mask",
+        text = {
+            "{C:attention}Enhances{} all played cards with",
+			"{C:hearts}Heart{} suit when scored",
+			"{C:inactive,s:0.8}(Different effect if you lose {C:attention,s:0.8}Vampire{C:inactive,s:0.8})"
+        },
+    }
+G.localization.descriptions.Other['bluestormcopier'] =  {
+        name = "Bluestorm",
+        text = {
+            "Acts as {C:attention}Blueprint{} if copied by",
+			"{C:attention}Brainstorm{} and vice-versa",
+			"{C:inactive,s:0.8}(Different effect if you don't own any)"
+        },
+    }
+G.localization.descriptions.Other['bluestormlonely'] =  {
+        name = "Bluestorm",
+        text = {
+            "Sell this card after {C:attention}#1#",
+			"rounds to randomly create a",
+			"{C:attention}Blueprint{} or {C:attention}Brainstorm{}",
+			"{C:inactive}(Currently {C:attention}#2#{C:inactive}/#1#)",
+			"{C:inactive,s:0.8}(Different effect if you own any of the two)"
+        },
     }
 
 SMODS.current_mod.extra_tabs = function()
