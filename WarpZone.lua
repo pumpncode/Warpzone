@@ -2934,7 +2934,7 @@ SMODS.Joker {
 	else
 		_whatbluestorm = "bluestormlonely"
 	end
-	full_UI_table.name = localize{type = 'name', key = self.key, set = self.set, name_nodes = {}, vars = specific_vars or {}}
+	full_UI_table.name = localize{type = 'name', key = _whatbluestorm, set = "Other", name_nodes = {}, vars = specific_vars or {}}
 	localize{type = 'descriptions', key = _whatbluestorm,  set = "Other", nodes = desc_nodes, vars = {card.ability.howmany,card.ability.currently}}
 	info_queue[#info_queue+1] = "j_blueprint" and G.P_CENTERS.j_blueprint or nil
 	info_queue[#info_queue+1] = "j_brainstorm" and G.P_CENTERS.j_brainstorm or nil
