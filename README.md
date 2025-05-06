@@ -2,7 +2,7 @@
 
 A Vanilla-Friendly Joker expansion mod for Balatro
 
-Credits
+# Credits
 
 _Freh: Main dev
 
