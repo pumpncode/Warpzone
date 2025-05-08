@@ -3812,7 +3812,7 @@ SMODS.Sticker{
 		if context.selling_self and card.ability.darkorbturns and card.ability.darkorbturns >= 2 then
 			local rarities = {"Common", "Uncommon", "Rare", "Legendary"}
 			local _rarity = rarities[card.config.center.rarity]
-			SMODS.add_card { set = 'Joker', rarity = _rarity}
+			SMODS.add_card { set = 'Joker', rarity = _rarity, edition = "e_negative" }
 		end
 	end
 }
