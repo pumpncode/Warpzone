@@ -117,7 +117,7 @@ SMODS.Joker {
 					to_juice = card
 				end
                 G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
-                    G.GAME.blind.chips = math.floor(G.GAME.blind.chips - ( card.ability.fullblind * 0.008))
+                    G.GAME.blind.chips = math.floor(G.GAME.blind.chips - ( card.ability.fullblind * 0.01))
                     G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
                     
                     local chips_UI = G.hand_text_area.blind_chips
@@ -334,7 +334,7 @@ SMODS.Joker {
         end
     end
 }
-if not next(SMODS.find_mod('MoreFluff')) then
+if not next(SMODS.find_mod('More Fluff')) then
 SMODS.Joker {
     key = "stack",
     name = "Stack",
@@ -355,10 +355,10 @@ SMODS.Joker {
     cost = 3,
     add_to_deck = function(self, card, from_debuff)
 		G.jokers.config.card_limit = G.jokers.config.card_limit + 1
-		end,
+	end,
 	remove_from_deck = function(self, card, from_debuff)
 		G.jokers.config.card_limit = G.jokers.config.card_limit - 1
-		end
+	end
 }
 end
 SMODS.Joker {
@@ -1174,7 +1174,7 @@ SMODS.Joker {
     loc_txt = {
         name = "Hollowness",
         text = {
-            "After {C:attention}2{} rounds, sell",
+            "After {C:attention}4{} rounds, sell",
 			"this card to make all",
 			"cards in hand {C:dark_edition}Negative{}",
 			"{C:inactive}(Currently {C:attention}#1#{C:inactive}/2)"
@@ -1203,14 +1203,14 @@ SMODS.Joker {
             juice_card_until(card, eval, true)
         end
 		if context.end_of_round and context.main_eval and not context.repetition then
-			if card.ability.loyalty_remaining < 2 then
+			if card.ability.loyalty_remaining < 4 then
 			card.ability.loyalty_remaining = card.ability.loyalty_remaining + 1
 				return {
-				message = tostring(card.ability.loyalty_remaining)  ..  "/2",
+				message = tostring(card.ability.loyalty_remaining)  ..  "/4",
 				}
 			end
 		end
-		if context.selling_self and card.ability.loyalty_remaining >= 2 then
+		if context.selling_self and card.ability.loyalty_remaining >= 4 then
 			if G.hand then
 				for i = 1, #G.hand.cards do
 					G.hand.cards[i]:set_edition({negative = true})
@@ -1452,7 +1452,7 @@ SMODS.Joker {
 			end
 			if context.other_card:is_suit("Spades") then
 				return {
-					message = 'Again!',
+					message = localize("k_again_ex"),
 					repetitions = 1,
 					card = card
 				}
@@ -1512,7 +1512,7 @@ SMODS.Joker {
         text = {
             "{C:attention}Splits{} into {C:attention}5{} {C:attention}Forbidden{} cards added to",
 			"your {C:attention}deck{} when first hand is drawn",
-			"{C:red}Self destructs{} if {C:attention}copied{} or your",
+			"{C:red,E:2}Self destructs{} if {C:attention}copied{} or your",
 			"{C:attention}full deck{} is not between",
 			"{C:attention}40{} and {C:attention}60{} cards"
         }
@@ -1836,7 +1836,7 @@ SMODS.Joker {
   loc_txt = {
         name = "Traffikrab",
         text = {
-            "Enhances {C:attention}#1#{} random card in",
+            "Enhance {C:attention}#1#{} random card in",
 			"played hand to {C:attention}Poisonous{} when",
 			"{C:attention}score catches on fire{}",
 			"{C:inactive,s:0.8}(Improves already Poisonous cards)",
@@ -1947,7 +1947,7 @@ SMODS.Joker {
   loc_txt = {
         name = "Lobstacle",
         text = {
-            "Enhances {C:attention}#1#{} random card in",
+            "Enhance {C:attention}#1#{} random card in",
 			"played hand to {C:attention}Poisonous{} when",
 			"{C:attention}score catches on fire{}",
 			"{C:inactive,s:0.8}(Improves already Poisonous cards)",
@@ -2047,7 +2047,7 @@ SMODS.Joker {
             "{C:attention}Poisonous{} cards in played hand spread",
 			"to adjacent cards {C:attention}#1#{} #2#",
 			"{C:inactive,s:0.8}(Improves already Poisonous cards)",
-			"Enhances {C:attention}#1#{} random card in played hand",
+			"Enhance {C:attention}#1#{} random card in played hand",
 			"to {C:attention}Poisonous{} instead if hand has none"
         }
     },
@@ -2229,13 +2229,13 @@ SMODS.Joker {
     if context.cardarea == G.play and context.repetition and not context.repetition_only then
 			if context.other_card.config.center == G.P_CENTERS.m_Wzon_poisonous then
 				return {
-					message = 'Again!',
+					message = localize("k_again_ex"),
 					repetitions = card.ability.extra.to_poison + 1,
 					card = card
 				}
 			else
 				return {
-					message = 'Again!',
+					message = localize("k_again_ex"),
 					repetitions = 1,
 					card = card
 				}
@@ -2253,7 +2253,7 @@ SMODS.Joker {
         text = {
             "Create a copy of {C:tarot}#1#{}",
 			"when {C:attention}Blind{} is defeated,",
-			"#2#{C:tarot}#4#{C:red}#3#",
+			"#2#{C:tarot}#4#{C:red,E:2}#3#",
 			"{C:inactive}(must have room)"
         }
     },
@@ -3812,7 +3812,7 @@ SMODS.Sticker{
 		if context.selling_self and card.ability.darkorbturns and card.ability.darkorbturns >= 2 then
 			local rarities = {"Common", "Uncommon", "Rare", "Legendary"}
 			local _rarity = rarities[card.config.center.rarity]
-			SMODS.add_card { set = 'Joker', rarity = _rarity, edition = "e_negative" }
+			SMODS.add_card { set = 'Joker', rarity = _rarity}
 		end
 	end
 }
@@ -3941,8 +3941,8 @@ SMODS.PokerHandPart{ -- Spectrum base (Referenced from SixSuits, only used for O
 
 SMODS.PokerHand {
     key = 'Obliterate',
-    chips = 1e309,
-    mult = 1e309,
+    chips = 1e308,
+    mult = 1e308,
 	l_chips = 0,
 	l_mult = 0,
 	visible = false,
@@ -4174,7 +4174,7 @@ G.localization.descriptions.Other["masquerade_reminder"] = {
            "{C:chips}+#1#{} Chips",
            "{C:mult}+#2#{} Mult",
            "Reduces full blind by",
-		   "{C:attention}0.8%{} for every scoring card"
+		   "{C:attention}1%{} for every scoring card"
        }
    }
 G.localization.descriptions.Other["discostats"] = {
@@ -4208,7 +4208,7 @@ G.localization.descriptions.Joker['masquerade'] =  {
            "{C:chips}+#1#{} Chips",
            "{C:mult}+#2#{} Mult",
            "Reduces full blind by",
-		   "{C:attention}0.8%{} for every scoring card"
+		   "{C:attention}1%{} for every scoring card"
        }
    }	
 G.localization.descriptions.Joker['turtle'] =  {
@@ -4459,7 +4459,7 @@ G.localization.descriptions.Joker['stonemasknovampire'] =  {
         text = {
             "Create a {C:attention}Vampire{} after {C:attention}#1#{}",
 			"cards with {C:hearts}Heart{} suit are",
-			"scored, {C:red}self destructs{}",
+			"scored, {C:red,E:2}self destructs{}",
 			"{C:inactive}(Currently {C:attention}#2#{C:inactive}/#1#)",
 			"{C:inactive,s:0.8}(Different effect if you own {C:attention,s:0.8}Vampire{C:inactive,s:0.8})"
         },
@@ -4467,7 +4467,7 @@ G.localization.descriptions.Joker['stonemasknovampire'] =  {
 G.localization.descriptions.Joker['stonemaskvampire'] =  {
         name = "Stone Mask",
         text = {
-            "{C:attention}Enhances{} all played cards with",
+            "{C:attention}Enhance{} all played cards with",
 			"{C:hearts}Heart{} suit when scored",
 			"{C:inactive,s:0.8}(Different effect if you lose {C:attention,s:0.8}Vampire{C:inactive,s:0.8})"
         },
@@ -4475,7 +4475,7 @@ G.localization.descriptions.Joker['stonemaskvampire'] =  {
 G.localization.descriptions.Other['bluestormcopier'] =  {
         name = "Bluestorm",
         text = {
-            "Acts as {C:attention}Blueprint{} if copied by",
+            "Act as {C:attention}Blueprint{} if copied by",
 			"{C:attention}Brainstorm{} and vice-versa",
 			"{C:inactive,s:0.8}(Different effect if you don't own any)"
         },
@@ -4526,4 +4526,3 @@ SMODS.current_mod.extra_tabs = function()
         }
     }
 end
-
